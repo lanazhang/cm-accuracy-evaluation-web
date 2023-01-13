@@ -1,0 +1,14 @@
+type Task @model @auth(rules: [ { allow: public } ] ){
+  id: ID!
+  name: String!
+  description: String
+  created_by: String
+  created_ts: AWSTimestamp
+  last_update_ts: AWSTimestamp
+  source_s3_bucket: String
+  source_s3_prefix: String
+  status: String
+  moderation_result_table: String
+  a2i_workflow_arn: String
+  a2i_portal_url: String
+}

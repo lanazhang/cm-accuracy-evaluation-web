@@ -1,0 +1,45 @@
+{
+  "data" :[
+    {
+      "id": "eaf093fc-86bc-43fe-90ce-c2ce8e0c9245",
+      "name": "accuracy evaluation test 1",
+      "description": "a test task",
+      "s3_bucket":"wwso-cm-accuracy-eval-us-east-1",
+      "s3_key_prefix": "test_account/input/wwso-cm-accuracy-eval-us-east-1/",
+      "created_by": "lanaz",
+      "created_ts": "2023-01-10 21:12:21",
+      "status": "CREATED",
+      "moderation_result_table": "cm-accuracy-eval-eaf093fc-86bc-43fe-90ce-c2ce8e0c9245",
+      "a2i_workflow_arn": null,
+      "last_update_ts": "2023-01-10 21:12:21",
+      "total_files": 10232
+    },
+    {
+      "id": "eaf093fc-86bc-43fe-90ce-c2ce8e0c924x",
+      "name": "accuracy evaluation test 2",
+      "description": "a test task",
+      "s3_bucket":"wwso-cm-accuracy-eval-us-east-1",
+      "s3_key_prefix": "test_account/input/wwso-cm-accuracy-eval-us-east-1/",
+      "created_by": "lanaz",
+      "created_ts": "2023-01-10 10:12:21",
+      "status": "CREATED",
+      "moderation_result_table": "cm-accuracy-eval-eaf093fc-86bc-43fe-90ce-c2ce8e0c924x",
+      "a2i_workflow_arn": null,
+      "last_update_ts": "2023-01-10 10:12:21",
+      "total_files": 12032
+    },  
+    {
+      "id": "eaf093fc-86bc-43fe-90ce-c2ce8e0c924y",
+      "name": "accuracy evaluation test 3",
+      "description": "a test task",
+      "s3_bucket":"wwso-cm-accuracy-eval-us-east-1",
+      "s3_key_prefix": "test_account/input/wwso-cm-accuracy-eval-us-east-1/",
+      "created_by": "lanaz",
+      "created_ts": "2023-01-09 21:12:21",
+      "status": "CREATED",
+      "moderation_result_table": "cm-accuracy-eval-eaf093fc-86bc-43fe-90ce-c2ce8e0c924y",
+      "a2i_workflow_arn": null,
+      "last_update_ts": "2023-01-09 21:12:21",
+      "total_files": 12719
+    }]
+  }
