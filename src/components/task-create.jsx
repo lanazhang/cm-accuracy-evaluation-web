@@ -3,42 +3,40 @@ import { Box, Button, Header, FormField, Input, Modal, SpaceBetween, Container, 
 import { S3Client } from "@aws-sdk/client-s3";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Link } from '@aws-amplify/ui-react';
-const REGION = "us-west-2";
 
-function readFileDataAsBase64(e) {
-  const file = e.target.files[0];
 
-  return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-          resolve(event.target.result);
-        };
-
-      reader.onerror = (err) => {
-          reject(err);
-      };
-
-      reader.readAsBinaryString(file);
-  });
-}
-
-function TaskCreate ({user, onDismiss}) {
+function TaskCreate ({user, onSubmit, onDismiss}) {
   const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
   const API_KEY = process.env.REACT_APP_API_KEY;
 
   const [userName, setUserName] = useState(user.username);
-  const [taskName, settaskName] = useState("");
+  const [taskName, setTaskName] = useState("");
   const [taskDescription, settaskDescription] = useState("");
-  const [fileType, setFileType] = useState(null);
   const [message, setMessage] = useState(null);
   const [submitFlag, setSubmitFlag] = useState(false);
   const [submitSuccessFlag, setSubmitSuccessFlag] = useState(false);
-  const [task, setTask] = useState(null);
 
   const handleSubmit = e => {
     e.preventDefault();
+
     setSubmitFlag(true);
+    if(taskName.length == 0 || taskName.length > 20) {
+      setMessage({
+        "status": "error",
+        "body": "The task name is required and should be at most 20 characters.",
+        "header": "Invalid input"
+      })
+      return;
+    }
+    else if(taskDescription.length > 200) {
+      setMessage({
+        "status": "error",
+        "body": "The description should be at most 200 characters.",
+        "header": "Invalid input"
+      })
+      return;
+    }
+
     if (taskName.length > 0) {
        fetch(ACCURACY_EVAL_SERVICE_URL + 'task/create-task', {
         method: 'PUT',
@@ -50,7 +48,7 @@ function TaskCreate ({user, onDismiss}) {
            }
         ),
         headers: {
-           'Content-type': fileType,
+           'Content-type': "application/json",
            'x-api-key': API_KEY
         },
         })
@@ -59,7 +57,8 @@ function TaskCreate ({user, onDismiss}) {
             var resp = JSON.parse(data.body);
             console.log(resp);
             setSubmitSuccessFlag(true);
-            setTask(resp);
+            e.task = resp;
+            onSubmit(e);
         })
         .catch((err) => {
            console.log(err.message);
@@ -75,7 +74,7 @@ function TaskCreate ({user, onDismiss}) {
   }
 
   const handletaskNameChange = e => {
-    settaskName(e.detail.value);
+    setTaskName(e.detail.value);
   }
 
   const handleDescriptionChange = e => {
@@ -106,56 +105,21 @@ function TaskCreate ({user, onDismiss}) {
           header={message.header}
         >{message.body}
         </Alert>:<div/>}
-        {!submitSuccessFlag? 
-        <Box margin="s" color="text-body-secondary">
-          Start creating an image accuracy evaluation task by specifying a name and description. After completing this step, you will receive an S3 bucket folder where you can upload the images and start the evaluation process.
-        </Box>: 
-        <Container header= {
-            <Header variant="h3">Task created successfully</Header>
-          }
-          margin="s" 
-          color="text-label">
-              As for the next step, you will need to copy the images to the S3 bucket folder: <b>`s3://${task.s3_bucket}/${task.s3_key_prefix}`</b>. Then come back to continue the process. 
-              <br/>We recommend providing more than 10,000 images for better accuracy evaluation. Fewer images will provide less data points and potentially lead to a skewed result.
-              <br/>If your sample images are already in an S3 bucket, you can use the below bash command to bulk copy images from your source S3 bucket to the one set up for this evaluation task. (Ensure your IAM user/role has proper access to both buckets.)
-              <br/><br/>
-              <span className="custom-wrapping">
-                <Box margin={{ right: 'xxs' }} display="inline-block">
-                  <Popover
-                    size="small"
-                    position="top"
-                    triggerType="custom"
-                    dismissButton={false}
-                    content={<StatusIndicator type="success">Command copied</StatusIndicator>}
-                  >
-                    <Button
-                      variant="inline-icon"
-                      iconName="copy"
-                      onClick={() => {
-                        /* copy to clipboard implementation */
-                        navigator.clipboard.writeText(`aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER s3://${task.s3_bucket}/${task.s3_key_prefix}`);
-                      }}
-                    />
-                  </Popover>
-                </Box>
-                <b>aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER s3://${task.s3_bucket}/${task.s3_key_prefix}</b>
-                <br/><br/>
-                <Link 
-                  isExternal={true} 
-                  externalIconAriaLabel="Opens in a new tab" 
-                  href='https://docs.aws.amazon.com/cloudshell/latest/userguide/multiple-files-upload-download.html'>
-                    More instruction about bulk copy to S3 bucket
-                </Link>
-              </span>          
-          </Container>}
-          <br/>
+        <br/>
         <form onSubmit={handleSubmit}>
             <SpaceBetween direction="vertical" size="l">
-              <FormField label="Task name" description="A unique name of the accuracy evluation task">
-                <Input value={taskName} onChange={handletaskNameChange} ariaRequired={true} invalid={submitFlag && taskName.trim().length === 0} />
+              <FormField label="Task name" description="A unique name for the accuracy evaluation task should be at most 20 characters.">
+                <Input 
+                  value={taskName} 
+                  onChange={handletaskNameChange} 
+                  ariaRequired={true} 
+                  invalid={submitFlag && (taskName.trim().length === 0 || taskName.length > 20)} />
               </FormField>
-              <FormField label="Description" description="Description of the accuracy evluation task">
-                <Textarea value={taskDescription} onChange={handleDescriptionChange} />
+              <FormField label="Description" description="A description for the accuracy evaluation task should be at most 200 characters.">
+                <Textarea 
+                  value={taskDescription} 
+                  onChange={handleDescriptionChange} 
+                  invalid={submitFlag && (taskDescription !== null && taskDescription.length > 200)}/>
               </FormField>
             </SpaceBetween>
         </form>

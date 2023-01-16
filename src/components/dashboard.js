@@ -4,8 +4,8 @@ import diagram from '../static/flow_diagram.png'
 export default () => {
 
     return (
-      <div>
-       <image src={diagram} alt="Evaluation work flow"></image>
-      </div>
+        <div>"hello world"
+       <img src={diagram} alt="Evaluation work flow" width="100%"></img>
+       </div>
     );
 }

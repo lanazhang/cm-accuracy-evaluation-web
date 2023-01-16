@@ -12,7 +12,6 @@ import TopNavigation from "@cloudscape-design/components/top-navigation";
 import logo from './static/aws_logo.png'
 import Dashboard from "./components/dashboard";
 import { BreadcrumbGroup, Link, SpaceBetween } from '@cloudscape-design/components';
-import { TaskCreate } from "./components/task-create";
 
 const App = ({ signOut, user }) => {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -35,9 +34,6 @@ const App = ({ signOut, user }) => {
     setNavigationOpen(!navigationOpen);
   }
 
-  const handleTaskCreate = e => {
-    setCurrentPage("create");
-  }
   const handleHavItemClick = e => {
     setCurrentPage(e.detail.id);
     setActiveNavHref(e.detail.href);
@@ -47,9 +43,6 @@ const App = ({ signOut, user }) => {
       setCurrentBreadcrumb([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Evaluation tasks', "href": '#/tasks', }]);
   }
 
-  const handleCreateDismiss = e =>{
-    setCurrentPage("tasks");
-  }
     return (
       <div>
       <TopNavigation      
@@ -123,8 +116,7 @@ const App = ({ signOut, user }) => {
         </SpaceBetween>
       }
       content={
-        currentPage === "tasks"?< TaskList onTaskCreate={handleTaskCreate} onItemClick={handleItemClick} onSelectionChange={onSelectionChange}/>:
-        currentPage === "create"?<TaskCreate user={user} onDismiss={handleCreateDismiss} />:< Dashboard />
+        currentPage === "tasks"?< TaskList user={user} onItemClick={handleItemClick} onSelectionChange={onSelectionChange}/>:<Dashboard></Dashboard>
       }
     >
     </AppLayout>

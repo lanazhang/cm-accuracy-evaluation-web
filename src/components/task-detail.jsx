@@ -10,53 +10,91 @@ import {
   Link,
   Pagination,
   Popover,
-  Modal
+  Modal,
+  Alert,
+  ProgressBar,
+  ExpandableSection,
+  Flashbar,
+  Spinner
 } from '@cloudscape-design/components';
-import Cards from "@cloudscape-design/components/cards";
-import Badge from "@cloudscape-design/components/badge";
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
 
-// ["CREATED", "MODERATING", "MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED", "FAILED"]
-
-function getAvgToxicityConfidence(task) {
-  var total = 0;
-  var count = 0;
-  var toxicity_count = 0
-  if (task !== undefined)
-    task.toxicity.forEach(function(i, idx) {
-        if (i.toxicity >= 0.5) {
-          total += i.toxicity;
-          toxicity_count++;
-        }
-        count++;
-      }
-    )
-  var avg = 0
-  if (toxicity_count > 0) {
-    avg = total/toxicity_count;
-  }
-  return {"average_confidence_score": avg, "total_count": count, "toxicity_count": toxicity_count}
-}
-
-function getToxicSegments(task_full) {
-  if (task_full == undefined)
-    return null;
-  var j = Object.assign({}, task_full);
-  j.toxicity = task_full.toxicity.filter(t=> t.toxicity >= 0.5);  
-  return j;
-}
 
 function TaskDetail ({selectedTask, onBack}) {
 
-  const [loadedFlag, setLoadedFlag ] = useState(false);
   const [moderationSubmittedFlag, setModerationSubmittedFlag ] = useState(false);
   const [task, setTask] = useState(selectedTask)
+  const [loadingStatus, setLoadingStatus] = useState(null) // null, LOADING, LOADED
 
-  const [showModerateModal, setShowModerateModal] = useState(false);
-  const [toxicityToggleChecked, setToxicityToggleChecked] = useState(true);
+  const [showSummary, setShowSummary] = useState(true);
+  const [expandSummary, setExpandSummary] = useState(false);
+  const [showModeration, setShowModeration] = useState(false);
+  const [expandModeration, setExpandModeration] = useState(false);
+  const [showHumanReview, setShowHumanReview] = useState(false);
+  const [expandHumanReview, setExpandHumanReview] = useState(false);
+  const [actions, setActions] = useState([]);
+  const [showModerateModal, setShowModerateModal]= useState(false);
+
+  // Status values: ["CREATED", "MODERATING", "MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED", "FAILED"]
+  // Action values: ["TO_S3", "START_MOD", "MOD_PROGRESS", "GO_TO_A2I", "REVIEW_PROGRESS", "CHECK_REPORT"]
+  function setPanelStatus(t) {
+    if(t !== null && t.status !== null) {
+      // Summary section
+      switch(t.status) {
+        case "CREATED":
+          setShowSummary(true);
+          setExpandSummary(true);
+          setShowModeration(false);
+          setExpandModeration(false);
+          setShowHumanReview(false);
+          setExpandHumanReview(false);
+          if (t.total_files === null || t.total_files == 0)
+            setActions(["TO_S3"]);
+          else
+            setActions(["START_MOD"]);
+          break;
+        case "MODERATING":
+          setShowSummary(true);
+          setExpandSummary(false);
+          setShowModeration(true);
+          setShowHumanReview(false);
+          setExpandModeration(true);
+          setExpandHumanReview(false);
+          setActions(["MOD_PROGRESS"]);
+          break;      
+        case "MODERATION_COMPLETED":
+          setShowSummary(true);
+          setExpandSummary(false);
+          setShowModeration(true);
+          setExpandModeration(false);
+          setShowHumanReview(true);
+          setExpandHumanReview(true);
+          setActions(["GO_TO_A2I"]);
+          break;    
+        case "HUMAN_REVIEWING":
+          setShowSummary(true);
+          setExpandSummary(false);
+          setShowModeration(false);
+          setShowHumanReview(true);
+          setExpandModeration(true);
+          setExpandHumanReview(true);
+          setActions(["REVIEW_PROGRESS"]);
+          break;    
+        case "COMPLETED":
+          setShowSummary(true);
+          setExpandSummary(true);
+          setShowModeration(true);
+          setShowHumanReview(true);
+          setExpandModeration(true);
+          setExpandHumanReview(true);
+          setActions(["CHECK_REPORT"]);
+          break;      
+        }
+    }
+  }
 
   const handleStartModerationClick = e => {
     setShowModerateModal(true);
@@ -83,54 +121,61 @@ function TaskDetail ({selectedTask, onBack}) {
         .then((data) => {
             var j = JSON.parse(data.body)
             setTask(j);
+            setModerationSubmittedFlag(true);
+            reloadTask();
         })
         .catch((err) => {
           console.log(err.message);
         });
-        setModerationSubmittedFlag(true);
     }
   }
 
   useEffect(() => {
-    if (!loadedFlag && (task.total_files === null || task.total_files === 0))
-    {
-      fetch(ACCURACY_EVAL_SERVICE_URL + 'task/task-with-count', {
-        method: 'POST',
-        body: JSON.stringify({
-          id: task.id
-        }),
-        headers: {
-           'Content-type': 'application/json; charset=UTF-8',
-           'x-api-key': API_KEY
-        },
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            var j = JSON.parse(data.body)
-            setTask(j);
-        })
-        .catch((err) => {
-          console.log(err.message);
-        });
-
-      setLoadedFlag(true);
+    // Auto refresh 
+    if (loadingStatus === null) {
+      reloadTask();
     }
   })
 
-  const TaskDetails = () => (
+  function reloadTask() {
+    console.log(task);
+    setLoadingStatus("LOADING");
+    setModerationSubmittedFlag(false);
+    fetch(ACCURACY_EVAL_SERVICE_URL + 'task/task-with-count', {
+      method: 'POST',
+      body: JSON.stringify({
+        id: task.id
+      }),
+      headers: {
+         'Content-type': 'application/json; charset=UTF-8',
+         'x-api-key': API_KEY
+      },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+          var j = JSON.parse(data.body)
+          setTask(j);
+          setPanelStatus(j);
+          setLoadingStatus("LOADED");
+      })
+      .catch((err) => {
+        console.log(err.message);
+        setLoadingStatus("LOADED");
+      });
+
+  }
+
+  const handleRefresh = e => {
+    reloadTask();
+  }
+
+  const Summary = () => (
     <div>
     <ColumnLayout columns={4} variant="text-grid">
         <div>
-          <Box variant="awsui-key-label">Task name and description</Box>
-          <div>{task!==null?task.name:""}</div>
+          <Box variant="awsui-key-label">Description</Box>
           <div>{task!==null?task.description:""}</div>
-        </div>
-        <div>
-          <Box variant="awsui-key-label">Status</Box>
-          <div>
-          <StatusIndicator type={task.status === 'COMPLETED' ? 'success' : task.status === 'FAILED'? 'error': 'info' }>{task.status}</StatusIndicator>
-          </div>
-        </div>        
+        </div>     
         <div>
           <Box variant="awsui-key-label">S3 URI</Box>
           <div>{task!==null && task.s3_bucket !== null ?`s3://${task.s3_bucket}/${task.s3_key_prefix}`:""}</div>
@@ -140,18 +185,61 @@ function TaskDetail ({selectedTask, onBack}) {
           <div>{task!==null && task.total_files !== null && parseInt(task.total_files) > 0?parseInt(task.total_files).toLocaleString('en-US'): 0}</div>
         </div>          
         <div>
-          <Box variant="awsui-key-label">Created by</Box>
+          <Box variant="awsui-key-label">Created</Box>
           <div>{task!==null?task.created_by:""}</div>
-        </div>   
-        <div>
-          <Box variant="awsui-key-label">Created at</Box>
           <div>{task!==null?task.created_ts:""}</div>
         </div>   
     </ColumnLayout>
-    <br/>
-    {task !== null && task.status === "CREATED" && task.total_files !== null && parseInt(task.total_files) > 0?
+    </div>
+  );
+
+  const ModerationSummary = () => (
+    <div>
+    <ColumnLayout columns={3} variant="text-grid">
+        <div>
+          <Box variant="awsui-key-label">Total uploaded images</Box>
+          <Box variant="awsui-value-large">{task!==null && task.total_files !== null?parseInt(task.total_files).toLocaleString('en-US'):""}</Box>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Moderated images</Box>
+          <Box variant="awsui-value-large">{task!==null && task["processed"] !== undefined?task.processed.toLocaleString('en-US'):""}</Box>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Rekognition labeled</Box>
+          <Box variant="awsui-value-large">{task!==null && task["labeled"] !== undefined?task.labeled.toLocaleString('en-US'):""}</Box>
+        </div>  
+      </ColumnLayout>
+    </div>
+  );
+
+  const HumanReviewSummary = () => (
+    <div>
+    <ColumnLayout columns={4} variant="text-grid">
+        <div>
+          <Box variant="awsui-key-label">Rekognition labeled</Box>
+          <Box variant="awsui-value-large">{task!==null && task["labeled"] !== undefined?task.labeled.toLocaleString('en-US'):""}</Box>
+        </div>  
+        <div>
+          <Box variant="awsui-key-label">Images reviewed by huamn</Box>
+          <Box variant="awsui-value-large">{task!==null && task["reviewed"] !== undefined?task.reviewed.toLocaleString('en-US'):""}</Box>
+        </div>  
+        <div>
+          <Box variant="awsui-key-label">Numbers of False Positive</Box>
+          <Box variant="awsui-value-large">{task!==null && task["false_positive"] !== undefined?task.false_positive.toLocaleString('en-US'):""}</Box>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Numbers of True Positive</Box>
+          <Box variant="awsui-value-large">{task!==null && task["true_positive"] !== undefined?task.true_positive.toLocaleString('en-US'):""}</Box>
+        </div>
+      </ColumnLayout>
+    </div>
+  );
+
+  const Action = () => (
+    <div>
+    {actions.includes("START_MOD")?
     <Box margin={'l'} float='right'>
-      <Button variant="primary" onClick={handleStartModerationClick}>Start moderation</Button>
+      <Button variant="primary" onClick={handleStartModerationClick} disabled={moderationSubmittedFlag}>Start moderation</Button>
       <Modal 
         onDismiss={handleCloseModerationModal} 
         visible={showModerateModal}
@@ -167,11 +255,13 @@ function TaskDetail ({selectedTask, onBack}) {
         Amazon Rekognition will moderate the <b>{task.total_files}</b> images in the S3 bucket: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b>. You will no longer be allowed to add new images to the bucket once the moderation process start.
       </Modal>
     </Box>:<div/>}
-    {task !== null && task.status === "CREATED" && (task.total_files === null || parseInt(task.total_files) === 0)?
-    <Container>
-          As for the next step, you will need to copy the images to the S3 bucket folder: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b>. Then come back to continue the process. 
-          <br/>We recommend providing more than 10,000 images for better accuracy evaluation. Fewer images will provide less data points and potentially lead to a skewed result.
-          <br/>If your sample images are already in an S3 bucket, you can use the below bash command to bulk copy images from your source S3 bucket to the one set up for this evaluation task. (Ensure your IAM user/role has proper access to both buckets.)
+
+    {actions.includes("TO_S3")?
+      <Alert>
+          <b>You have initiated an accuracy evaluation task successfully!</b>
+          <br/>As for the next step, you will need to copy the images to the S3 bucket folder: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b> provisioned for this task. Then come back to continue the process. 
+          <br/>We recommend providing more than 10,000 images for better accuracy evaluation. Fewer images will provide less data points and potentially produce a skewed result.
+          <br/>If your sample images are already in an S3 bucket, use the below bash command to bulk copy images from the source S3 bucket to the one set up for this evaluation task. (Ensure your IAM user/role has proper access to both buckets.)
           <br/><br/>
           <span className="custom-wrapping">
             <Box margin={{ right: 'xxs' }} display="inline-block">
@@ -187,89 +277,115 @@ function TaskDetail ({selectedTask, onBack}) {
                   iconName="copy"
                   onClick={() => {
                     /* copy to clipboard implementation */
-                    navigator.clipboard.writeText(`aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER s3://${task.s3_bucket}/${task.s3_key_prefix}`);
+                    navigator.clipboard.writeText(`aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER/ s3://${task.s3_bucket}/${task.s3_key_prefix}`);
                   }}
                 />
               </Popover>
             </Box>
-            <b>aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER s3://${task.s3_bucket}/${task.s3_key_prefix}</b>
+            <b>aws s3 sync s3://YOUR_SOURCE_S3_BUCKET/YOUR_FOLDER/ s3://{task.s3_bucket}/{task.s3_key_prefix}</b>
             <br/><br/>
             <Link 
               isExternal={true} 
               externalIconAriaLabel="Opens in a new tab" 
               href='https://docs.aws.amazon.com/cloudshell/latest/userguide/multiple-files-upload-download.html'>
-                More instruction about bulk copy to S3 bucket
+                 Refer to the document for more instructions if your images are outside S3.
             </Link>
-          </span>   
-    </Container>:<div/>
-    }
-    </div>
-  );
+          </span>  
+          </Alert> 
+    :<div/>
+    } 
 
-  const ModeratiinDetail = () => (
-    <div>
-    <ColumnLayout columns={3} variant="text-grid">
-        <div>
-          <Box variant="awsui-key-label">Total number of images in the S3 bucket</Box>
-          <div>{task!==null?parseInt(task.total_files).toLocaleString('en-US'):""}</div>
-        </div>
-        <div>
-          <Box variant="awsui-key-label">Number of images moderated by Rekognition</Box>
-          <div>
-          100
-          </div>
-        </div>
-        <div>
-          <Box variant="awsui-key-label">Number of images labeled by Rekognition</Box>
-          <div>
-          3
-          </div>
-        </div>  
-    </ColumnLayout>
-    <br/>
-    <Container>
-        Login to the Augmented AI (A2I) portal to review the moderation result.
-        <br/><Link>Human review portal</Link>
-    </Container>
+    {actions.includes("GO_TO_A2I")?
+    <Alert>
+        Rekognition moderated all the images in the S3 bucket folder. Now, you can log in to the Augmented AI (A2I) portal to review the moderation result. 
+        Choose job <b>{task.a2i_job_title}</b> from the list and click "Start working" to review the moderation results.
+        <br/><br/><Link variant="primary" external='true' href={task.a2i_url !== null?task.a2i_url:""}>Open A2I human review portal</Link>
+    </Alert>: <div/>
+    }   
 
-    </div>
-  );
+    {actions.includes("MOD_PROGRESS")?
+      <Flashbar
+      items={[
+        {
+          content: (
+          <ProgressBar
+            variant="flash"
+            value={(task.processed * 100)/task.total_files}
+            label="Rekognition image moderation progress"
+          />
+      )}]}>
+
+      </Flashbar>
+    :<div/>}
+
+    {actions.includes("REVIEW_PROGRESS")?
+      <Flashbar
+      items={[
+        {
+          content: (
+          <ProgressBar
+            variant="flash"
+            value={(task.reviewed * 100)/task.labeled}
+            label="Huamn review (using A2I) progress"
+          />
+      )}]}>
+      </Flashbar>
+    :<div/>}
+    </div>)
 
     return (
       <div>
-        <Container
-          header={
-            <div>
-            <Header
-              variant="h2"
-              info={''}>
-              Rekognition image accuracy evaluation task
-            </Header>
+        <Header
+          actions={
             <Box float="right">
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button variant="normal" onClick={onBack}>
-                  Back to list
-                </Button>
-              </SpaceBetween>
-            </Box> 
-            </div>
-          }>
-          <TaskDetails />
-        </Container>
+            <SpaceBetween direction="horizontal" size="xs">
+            {actions.includes("CHECK_REPORT")?
+              <div>
+              <Button variant='primary'>Review report</Button>&nbsp;
+              <Button variant='primary'>Check images</Button>
+              </div>
+              :
+              loadingStatus === "LOADING"?<Spinner />
+              :<Button variant="normal" iconName="refresh" onClick={handleRefresh} />
+            }
+              <Button variant="normal" onClick={onBack}>
+                Back to list
+              </Button>
+            </SpaceBetween>
+          </Box>
+          }
+        >Rekognition image accuracy evalution task</Header>
         <br/>
-        {(task !== null && task.status !== "CREATED") ?
-        <Container
-          header={
-            <div>
-            <Header
-              variant="h2"
-              info=''>
-                Review the moderation result
-            </Header>
-            </div>
-          }>
-          <ModeratiinDetail />
-        </Container>:<div/>}
+        {showSummary?
+        <ExpandableSection 
+          defaultExpanded={expandSummary} 
+          variant="container" 
+          headerText={task.name}
+          headerDescription={<StatusIndicator type={task.status === 'COMPLETED' ? 'success' : task.status === 'FAILED'? 'error': 'info' }>{task.status}</StatusIndicator>}
+          >
+            <Summary />
+        </ExpandableSection>:<div/>}
+        <br/>
+        {showModeration ?
+        <ExpandableSection 
+          defaultExpanded={expandModeration} 
+          variant="container" 
+          headerText="Moderation summary"
+          headerDescription={task.labeled + ' / ' + task.total_files + ' images labeled by Rekognition image moderation API'}>
+            <ModerationSummary />
+        </ExpandableSection>:<div/>}
+        <br/>
+        {showHumanReview ?
+        <ExpandableSection 
+          defaultExpanded={expandHumanReview} 
+          variant="container" 
+          headerText="Human review summary" >
+            <HumanReviewSummary />
+        </ExpandableSection>:<div/>}
+        <br />
+        {actions.length > 0? 
+        <Action></Action>
+        :<div/>}
       </div>
     );
 }
