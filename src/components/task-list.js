@@ -4,6 +4,7 @@ import { Box, Button, Table, TextFilter, Modal, SpaceBetween, Container, Alert, 
 import { TaskDetail } from './task-detail';
 import { TaskCreate } from "./task-create";
 import { TaskReport } from './task-report';
+import { TaskImages } from './task-images';
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -19,6 +20,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
 
   const [showDetail, setShowDetail] = useState(false); 
   const [showReport, setShowReport] = useState(false); 
+  const [showImages, setShowImages] = useState(false); 
   const [loadingStatus, setLoadingStatus] = useState(null); //null, LOADING, LOADED 
 
   useEffect(() => {
@@ -100,6 +102,8 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
     setItems([]);
     setLoadingStatus(null);
     setShowDetail(false);
+    setShowReport(false);
+    setShowImages(false);
   }
 
   const handleCreateSubmit = e => {
@@ -114,13 +118,18 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
 
   const handleReport = e => {
     setShowReport(true);
+    setShowDetail(false);
   }
-  const handleImages = e => {}
+  const handleImages = e => {
+    setShowImages(true);
+    setShowDetail(false);
+  }
 
   return (
       <div> <br/>
-      {showDetail?<TaskDetail selectedTask={selectedItems.length > 0?selectedItems[0]:null} onBack={handleBackToList} />:
+      {showDetail?<TaskDetail selectedTask={selectedItems.length > 0?selectedItems[0]:null} onBack={handleBackToList} onImageClick={handleImages} onReportClick={handleReport} />:
         showReport?<TaskReport selectedTask={selectedItems.length > 0?selectedItems[0]:null} onBack={handleBackToList} />:
+        showImages?<TaskImages selectedTask={selectedItems.length > 0?selectedItems[0]:null} onBack={handleBackToList} />:
         <Table
           loading={loadingStatus === "LOADING"}
           loadingText="Loading tasks"

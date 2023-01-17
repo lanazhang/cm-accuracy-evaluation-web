@@ -23,7 +23,7 @@ const API_KEY = process.env.REACT_APP_API_KEY;
 
 
 
-function TaskDetail ({selectedTask, onBack}) {
+function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
 
   const [moderationSubmittedFlag, setModerationSubmittedFlag ] = useState(false);
   const [task, setTask] = useState(selectedTask)
@@ -341,8 +341,8 @@ function TaskDetail ({selectedTask, onBack}) {
             <SpaceBetween direction="horizontal" size="xs">
             {actions.includes("CHECK_REPORT")?
               <div>
-              <Button variant='primary'>Review report</Button>&nbsp;
-              <Button variant='primary'>Check images</Button>
+              <Button variant='primary' onClick={onReportClick}>Review report</Button>&nbsp;
+              <Button variant='primary' onClick={onImageClick}>Check images</Button>
               </div>
               :
               loadingStatus === "LOADING"?<Spinner />

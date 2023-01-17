@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {Container, ColumnLayout, Grid, Box, Link, Header, StatusIndicator,PieChart, Button, BarChart, AreaChart, ButtonDropdown} from '@cloudscape-design/components';
+import {Container, ColumnLayout, Grid, Box, Link, Header, StatusIndicator,PieChart, Button, BarChart, AreaChart, ButtonDropdown, Spinner} from '@cloudscape-design/components';
+import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
@@ -13,19 +14,7 @@ function TaskReport ({selectedTask, onBack}) {
     const [subCategoryFilter, setSubCategoryFilter] = useState(null);
     const [typeFilter, setTypeFilter] = useState(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(null);
-
-    const TypeFilterValue = [
-           { id: "-", text: "-- All --" },
-           { id: "true-positive", text: "True Positive" },
-           { id: "false-positive", text: "False Positive" },
-         ]
-    const ConfidenceValue = [
-           { id: "50", text: "50%" },
-           { id: "60", text: "60%" },
-           { id: "70", text: "70%" },
-           { id: "80", text: "80%" },
-           { id: "90", text: "90%" },
-         ]
+    const [subCategories, setSubCategories] = useState(null);
 
     useEffect(() => {
       // Auto refresh 
@@ -62,8 +51,34 @@ function TaskReport ({selectedTask, onBack}) {
         });
     }
 
-    const handleCategoryItemClick = e => {
+    const handleTopCategoryItemClick = e => {
+      if (e.detail.id == topCategoryFilter) 
+        return;
+      if (e.detail.id == '-- All --')
+        setTopCategoryFilter(null);
+      else  
+        setTopCategoryFilter(e.detail.id);
+      
+      // Set sub category filter
+      var sub = ModerationCategories[e.detail.id].map((x) => {
+        return {
+            "id": x,
+            "text": x
+        };
+      })
+      setSubCategories(sub);
+      setLoadingStatus(null);
+    }
+
+    const handleSubCategoryItemClick = e => {
       console.log(e);
+      if (e.detail.id == topCategoryFilter) 
+        return;
+      if (e.detail.id == '-- All --')
+        setSubCategoryFilter(null);
+      else  
+        setSubCategoryFilter(e.detail.id);
+      setLoadingStatus(null);
     }
 
     const handleTypeItemClick = e => {
@@ -84,53 +99,65 @@ function TaskReport ({selectedTask, onBack}) {
       setLoadingStatus(null);
     } 
 
+    const handleReset = e => {
+      setTopCategoryFilter(null);
+      setSubCategoryFilter(null);
+      setConfidenceThreshold(null);
+      setTypeFilter(null);
+      setLoadingStatus(null);
+    }
+  
     const Filter = () => (
-      <ColumnLayout columns="4" variant="text-grid">
-      <ButtonDropdown
-         onItemClick={handleCategoryItemClick}
-         
-         items={[
-           { id: "Explicit Nudity", text: "Explicit Nudity" },
-           { id: "Suggestive", text: "Suggestive" },
-           {
-             id: "Female Swimwear Or Underwear",
-             text: "Female Swimwear Or Underwear",
-             items: [
-               { id: "start", text: "Start" },
-               { id: "stop", text: "Stop", disabled: true },
-               {
-                 id: "hibernate",
-                 text: "Hibernate",
-                 disabled: true
-               },
-               {
-                 id: "reboot",
-                 text: "Reboot",
-                 disabled: true
-               },
-               { id: "terminate", text: "Terminate" }
-             ]
-           }
-         ]}
-         expandableGroups
-       >
-        Filter by moderation category
-       </ButtonDropdown>       
-       <ButtonDropdown
-         onItemClick={handleTypeItemClick}
-         items={TypeFilterValue}
-         expandableGroups
-       >
-         {typeFilter === null? "Filter by review result": TypeFilterValue.find(t => t.id == typeFilter)[0].text}
-       </ButtonDropdown>    
-       <ButtonDropdown
-         onItemClick={handleConfidenceItemClick}
-         items={ConfidenceValue}
-         expandableGroups
-       >
-        {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold)[0].text}
-       </ButtonDropdown>    
+      <div>
+      <ColumnLayout columns="1" variant="text-grid">
+        <Box float='right'>
+              {loadingStatus === "LOADING"?<Spinner />
+              :<div /> } 
+         &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null} >Reset</Button>    
+         &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
+        </Box>
+      </ColumnLayout>
+      <ColumnLayout columns="1" variant="text-grid">
+      <Container float='left'>
+        <ButtonDropdown
+          onItemClick={handleTopCategoryItemClick}
+          items={Object.keys(ModerationCategories).map((x) => {
+                      return {
+                          "id": x,
+                          "text": x
+                      };
+                    })}
+          expandableGroups
+        >
+          {topCategoryFilter === null? "Filter top level category": topCategoryFilter}
+        </ButtonDropdown>       
+        &nbsp;  
+        <ButtonDropdown
+          onItemClick={handleSubCategoryItemClick}
+          items={subCategories !== null? subCategories: []}
+          expandableGroups
+        >
+          {subCategoryFilter === null? "Filter secondary level category": subCategoryFilter}
+        </ButtonDropdown> 
+        &nbsp;        
+        <ButtonDropdown
+          onItemClick={handleTypeItemClick}
+          items={TypeFilterValue}
+          expandableGroups
+        >
+          {typeFilter === null? "Filter by review result": TypeFilterValue.find(t => t.id == typeFilter).text}
+        </ButtonDropdown>  
+        &nbsp;    
+        <ButtonDropdown
+          onItemClick={handleConfidenceItemClick}
+          items={ConfidenceValue}
+          expandableGroups
+        >
+          {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold).text}
+        </ButtonDropdown>    
+        </Container>
        </ColumnLayout>
+       </div>
     )
     
     const Metrics = () => (
@@ -148,19 +175,19 @@ function TaskReport ({selectedTask, onBack}) {
         <ColumnLayout columns="4" variant="text-grid">
           <div>
             <Box variant="awsui-key-label">Total number of images</Box>
-            <Link variant="awsui-value-large">{parseInt(task.total_files).toLocaleString("en-US")}</Link>
+            <Box variant="awsui-value-large">{parseInt(task.total_files).toLocaleString("en-US")}</Box>
           </div>
           <div>
             <Box variant="awsui-key-label">Images labled by Rekognition</Box>
-            <Link variant="awsui-value-large">{report !== null?report.labeled.toLocaleString("en-US"):0}</Link>
+            <Box variant="awsui-value-large">{report !== null?report.labeled.toLocaleString("en-US"):0}</Box>
           </div>
           <div>
             <Box variant="awsui-key-label">Human reviewed images</Box>
-            <Link variant="awsui-value-large">{report !== null?report.reviewed.toLocaleString("en-US"):0}</Link>
+            <Box variant="awsui-value-large">{report !== null?report.reviewed.toLocaleString("en-US"):0}</Box>
           </div>
           <div>
             <Box variant="awsui-key-label">False positive / True positive</Box>
-            <Link variant="awsui-value-large">{report !== null?report.fp.toLocaleString("en-US"):0} / {report !== null?report.tp.toLocaleString("en-US"):0}</Link>
+            <Box variant="awsui-value-large">{report !== null?report.fp.toLocaleString("en-US"):0} / {report !== null?report.tp.toLocaleString("en-US"):0}</Box>
           </div>
         </ColumnLayout>
       </Container>
@@ -286,7 +313,7 @@ function TaskReport ({selectedTask, onBack}) {
       </Container>
     )
 
-    const BySubCategoryByType = () => (
+    const BySubCategoryByTypeBar = () => (
       <Container
       header={
         <Header 
@@ -298,7 +325,6 @@ function TaskReport ({selectedTask, onBack}) {
       >
         {report !== null && report.by_sub_category_type !== null?
         <BarChart
-              stackedBars
               detailPopoverSize="large"
               series={[
                 
@@ -344,7 +370,7 @@ function TaskReport ({selectedTask, onBack}) {
               loadingText="Loading chart"
               recoveryText="Retry"
               xScaleType="categorical"
-              xTitle="Sub category"
+              xTitle="Moderation category"
               yTitle="Number of images"
               empty={
                 <Box textAlign="center" color="inherit">
@@ -367,7 +393,7 @@ function TaskReport ({selectedTask, onBack}) {
       </Container>
     )
 
-    const ByTopCategoryByType = () => (
+    const ByTopCategoryByTypeBar = () => (
       <Container
       header={
         <Header 
@@ -379,7 +405,6 @@ function TaskReport ({selectedTask, onBack}) {
       >
         {report !== null && report.by_sub_category_type !== null?
         <BarChart
-              stackedBars
               detailPopoverSize="large"
               series={[
                 
@@ -425,7 +450,88 @@ function TaskReport ({selectedTask, onBack}) {
               loadingText="Loading chart"
               recoveryText="Retry"
               xScaleType="categorical"
-              xTitle="Sub category"
+              xTitle="Moderation category"
+              yTitle="Number of images"
+              empty={
+                <Box textAlign="center" color="inherit">
+                  <b>No data available</b>
+                  <Box variant="p" color="inherit">
+                    There is no data available
+                  </Box>
+                </Box>
+              }
+              noMatch={
+                <Box textAlign="center" color="inherit">
+                  <b>No matching data</b>
+                  <Box variant="p" color="inherit">
+                    There is no matching data to display
+                  </Box>
+                  <Button>Clear filter</Button>
+                </Box>
+              }
+            />:<div />}
+      </Container>
+    )
+
+    const ByConfidenceByTypeBar = () => (
+      <Container
+      header={
+        <Header 
+          variant="h2" 
+          description="Number of images in each confidence score bucket">
+          Confidence score distribution
+        </Header>
+      }
+      >
+        {report !== null && report.by_confidence_type !== null?
+        <BarChart
+              stackedBars
+              detailPopoverSize="large"
+              series={[
+                
+                {
+                  title: "True Positive",
+                  type: "bar",
+                  data: report.by_confidence_type["true-positive"].map((x, result) => {
+                    return {
+                        "x": x.title,
+                        "y": x.value
+                    };
+                  }),
+                  valueFormatter: e => e.toLocaleString("en-US")
+                },
+                {
+                  title: "False Positive",
+                  type: "bar",
+                  data: report.by_confidence_type["false-positive"].map((x, result) => {
+                    return {
+                        "x": x.title,
+                        "y": x.value
+                    };
+                  }),
+                  valueFormatter: e => e.toLocaleString("en-US")
+                }
+              ]}
+              xDomain={["50", "55", "60", "65", "70", "75", "80", "85", "90", "95"]} 
+              yDomain={[0, Math.max(...report.by_confidence_type["true-positive"].map(x => x.value).concat(report.by_confidence_type["false-positive"].map(x => x.value)))]}
+              i18nStrings={{
+                filterLabel: "Filter displayed data",
+                filterPlaceholder: "Filter data",
+                filterSelectedAriaLabel: "selected",
+                detailPopoverDismissAriaLabel: "Dismiss",
+                legendAriaLabel: "Legend",
+                chartAriaRoleDescription: "line chart",
+                xTickFormatter: e =>
+                  e + '%',
+              }}
+              ariaLabel="Single data series line chart"
+              errorText="Error loading data."
+              height={300}
+              hideFilter
+              loadingText="Loading chart"
+              recoveryText="Retry"
+              xScaleType="categorical"
+              xTitle="Confidence score range"
               yTitle="Number of images"
               empty={
                 <Box textAlign="center" color="inherit">
@@ -459,9 +565,11 @@ function TaskReport ({selectedTask, onBack}) {
             <TypePie />
           </ColumnLayout>
           <br/>
-          <ByTopCategoryByType />
+          <ByTopCategoryByTypeBar />
           <br/>
-          <BySubCategoryByType />
+          <BySubCategoryByTypeBar />
+          <br />
+          <ByConfidenceByTypeBar />
       </div>
     );
 }

@@ -17,22 +17,30 @@ export default class DataProvider {
   }
 }*/
 
-export default function FetchRestData(endpoint, method, body) {
-  console.log(endpoint,method,body);
-  fetch(ACCURACY_EVAL_SERVICE_URL + endpoint, {
-    method: method,
-    body: JSON.stringify(body),
-    headers: {
-       'Content-type': 'application/json; charset=UTF-8',
-       'x-api-key': API_KEY
-    },
-    })
-    .then((response) => response.json())
-    .then((data) => {
-        return JSON.parse(data.body)
-    })
-    .catch((err) => {
-      console.log(err.message);
-    });
-    return null;
+const ModerationCategories = {
+  "-- All --": [],
+  "Explicit Nudity": ["-- All --", "Nudity", "Graphic Male Nudity", "Graphic Female Nudity", "Sexual Activity", "Illustrated Explicit Nudity", "Adult Toys"],
+  "Suggestive": ["-- All --", "Female Swimwear Or Underwear","Male Swimwear Or Underwear","Partial Nudity","Barechested Male","Revealing Clothes","Sexual Situations"],
+  "Violence": ["-- All --" ,"Graphic Violence Or Gore", "Physical Violence", "Weapon Violence", "Weapons", "Self Injury"],
+  "Visually Disturbing": ["-- All --", "Emaciated Bodies","Corpses","Hanging","Air Crash","Explosions And Blasts"],
+  "Rude Gestures": ["-- All --", "Middle Finger"],
+  "Drugs": ["-- All --", "Drug Products", "Drug Use", "Pills", "Drug Paraphernalia"],
+  "Tobacco": ["-- All --", "Tobacco Products", "Smoking"],
+  "Alcohol": ["-- All --", "Drinking", "Alcoholic Beverages"],
+  "Gambling": ["-- All --", "Gambling"],
+  "Hate Symbols": ["-- All --", "Nazi Party", "White Supremacy", "Extremist"]
 }
+const TypeFilterValue = [
+       { id: "-", text: "-- All --" },
+       { id: "true-positive", text: "True Positive" },
+       { id: "false-positive", text: "False Positive" },
+     ]
+const ConfidenceValue = [
+       { id: "50", text: "50%" },
+       { id: "60", text: "60%" },
+       { id: "70", text: "70%" },
+       { id: "80", text: "80%" },
+       { id: "90", text: "90%" },
+     ]
+
+export {ModerationCategories, TypeFilterValue, ConfidenceValue};
