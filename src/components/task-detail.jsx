@@ -38,6 +38,8 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
   const [actions, setActions] = useState([]);
   const [showModerateModal, setShowModerateModal]= useState(false);
 
+  const [refreshInterval, setRefreshInterval] = useState(5);
+
   // Status values: ["CREATED", "MODERATING", "MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED", "FAILED"]
   // Action values: ["TO_S3", "START_MOD", "MOD_PROGRESS", "GO_TO_A2I", "REVIEW_PROGRESS", "CHECK_REPORT"]
   function setPanelStatus(t) {
@@ -131,14 +133,24 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
   }
 
   useEffect(() => {
+    console.log("//////");
+    
     // Auto refresh 
+    console.log(showModerateModal);
     if (loadingStatus === null) {
       reloadTask();
     }
-  })
+    else {
+      if (refreshInterval > 0 && !showModerateModal) {
+        const interval = setInterval(reloadTask, refreshInterval);
+        return () => clearInterval(interval);
+      }
+    }
+
+  }, [refreshInterval]);
 
   function reloadTask() {
-    console.log(task);
+    //console.log(task);
     setLoadingStatus("LOADING");
     setModerationSubmittedFlag(false);
     fetch(ACCURACY_EVAL_SERVICE_URL + 'task/task-with-count', {
@@ -169,6 +181,14 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
     reloadTask();
   }
 
+  const handleReportClick = e => {
+    e.task = task;
+    onReportClick(e);
+  }
+  const handleImagesClick = e => {
+    e.task = task;
+    onImageClick(e);
+  }
   const Summary = () => (
     <div>
     <ColumnLayout columns={4} variant="text-grid">
@@ -201,11 +221,11 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           <Box variant="awsui-value-large">{task!==null && task.total_files !== null?parseInt(task.total_files).toLocaleString('en-US'):""}</Box>
         </div>
         <div>
-          <Box variant="awsui-key-label">Moderated images</Box>
+          <Box variant="awsui-key-label">Total number of images processed by Rekognition</Box>
           <Box variant="awsui-value-large">{task!==null && task["processed"] !== undefined?task.processed.toLocaleString('en-US'):""}</Box>
         </div>
         <div>
-          <Box variant="awsui-key-label">Rekognition labeled</Box>
+          <Box variant="awsui-key-label">Total number of images labeled by Rekognition as inappropriate</Box>
           <Box variant="awsui-value-large">{task!==null && task["labeled"] !== undefined?task.labeled.toLocaleString('en-US'):""}</Box>
         </div>  
       </ColumnLayout>
@@ -252,7 +272,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           </Box>
         }
         header="Start moderating images">
-        Amazon Rekognition will moderate the <b>{task.total_files}</b> images in the S3 bucket: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b>. You will no longer be allowed to add new images to the bucket once the moderation process start.
+        Amazon Rekognition will moderate the <b>{task.total_files}</b> images in the S3 bucket: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b> <br/>You should not add new images to the folder after the moderation process starts.
       </Modal>
     </Box>:<div/>}
 
@@ -341,8 +361,8 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
             <SpaceBetween direction="horizontal" size="xs">
             {actions.includes("CHECK_REPORT")?
               <div>
-              <Button variant='primary' onClick={onReportClick}>Review report</Button>&nbsp;
-              <Button variant='primary' onClick={onImageClick}>Check images</Button>
+              <Button variant='primary' onClick={handleReportClick}>Review report</Button>&nbsp;
+              <Button variant='primary' onClick={handleImagesClick}>Check images</Button>
               </div>
               :
               loadingStatus === "LOADING"?<Spinner />

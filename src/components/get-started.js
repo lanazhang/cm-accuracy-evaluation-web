@@ -1,0 +1,68 @@
+import React, { useState, useEffect } from 'react';
+import diagram from '../static/flow_diagram.png'
+import {
+    ContentLayout,
+    Button,
+    Container,
+    Header,
+    SpaceBetween,
+    Link,
+    Alert,
+    Box,
+    RadioGroup
+  } from '@cloudscape-design/components';
+
+function GetStarted ({onStart}) {
+    const [messages, setMessages] = useState([]);
+
+    return (
+        <ContentLayout
+            header={
+                <SpaceBetween size="m">
+                <Header
+                    variant="h1"
+                    info={<Link>Info</Link>}
+                    description="A tool that helps you to evaluate Amazon Rekognition content moderation accuracy. "
+                    actions={
+                        <Button onClick={onStart}>Get Started</Button>
+                    }
+                >
+                    AWS Content Moderation Accuracy Evaluation
+                </Header>
+                {messages.length >0?
+                <Alert>This is a generic alert.</Alert>:<div/>}
+                </SpaceBetween>
+            }
+            >
+                <Container>
+                    <img src={diagram} alt="Evaluation work flow" width="100%"></img>
+                    <Box variant="p">
+                        This tool helps you evaluate Amazon Rekognition Content Moderation's false-positive rate based on your own dataset. 
+                        For a reliable result, we recommend you use a dataset with 10 - 50 thousand images, as fewer images may lead to a skewed result and a biased conclusion. 
+                        <br/>
+                        <br/>There are a few steps to complete the process:
+                        <br/>1. Initiate a new task and upload your dataset to the instructed S3 bucket folder.
+                        <br/>2. Start the moderation task once all the images are in place. Rekognition will then start to moderate images one by one.
+                        <br/>3. Rekognition will label some of your images as inappropriate. You then can review these images using A2I to provide human input: if the image truly has inappropriate information (true-positive) or not (false-positive).
+                        <br/>4. The tool will combine Rekognition moderation results and human inputs to produce an accurate report.
+                    </Box>
+                </Container>
+                {/*
+                <Container width="150">
+                <RadioGroup
+                    value={"moderating"}
+                    items={[
+                        { value: "created", label: "Task created", description: "Initiated task. Waiting for user to upload images." },
+                        { value: "image_ready", label: "Images uploaded to S3 bucket", description: "Images uploaded to the S3 bucket. Ready to start moderation." },
+                        { value: "moderating", label: "Moderation in progress", description: "Rekognition moderating the images." },
+                        { value: "moderated", label: "Moderation completes", description: "Rekognition has moderated all the images. Ready to start human review.", disabled: true },
+                        { value: "reviewing", label: "Human review in progress", description: "Human reviewing the images labeled by Rekognition." },
+                        { value: "completed", label: "Completed", description: "The evaluation process completes." },
+                    ]}
+                    />
+                </Container>*/}
+            </ContentLayout>
+    );
+}
+
+export {GetStarted};

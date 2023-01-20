@@ -6,18 +6,17 @@ import {withAuthenticator} from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import {Navigation, Notifications} from './components/commons/common-components';
 import { AppLayout } from '@cloudscape-design/components';
-import { EC2ToolsContent, Breadcrumbs } from './components/common-components';
 import { TaskList } from "./components/task-list";
 import TopNavigation from "@cloudscape-design/components/top-navigation";
 import logo from './static/aws_logo.png'
-import Dashboard from "./components/dashboard";
+import {GetStarted} from "./components/get-started";
 import { BreadcrumbGroup, Link, SpaceBetween } from '@cloudscape-design/components';
 
 const App = ({ signOut, user }) => {
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [currentPage, setCurrentPage] = useState("getstarted");
   const [navigationOpen, setNavigationOpen] = useState(true);
-  const [activeNavHref, setActiveNavHref] = useState("#/dashboard");
-  const [currentBreadcrumb, setCurrentBreadcrumb] = useState([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Dashboard', "href": '#/dashboard', }]);
+  const [activeNavHref, setActiveNavHref] = useState("#/getstarted");
+  const [currentBreadcrumb, setCurrentBreadcrumb] = useState([{ "type": 'label', "text": 'Home', "href": '#'}, {"id":"getstarted", "text": 'Get Started', "href": '#/getstarted', }]);
   const appLayout = useRef();
 
   const [selectedItems, setSelectedItems] = useState([]); 
@@ -37,10 +36,17 @@ const App = ({ signOut, user }) => {
   const handleHavItemClick = e => {
     setCurrentPage(e.detail.id);
     setActiveNavHref(e.detail.href);
-    if (e.detail.id === "dashboard")
-      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Dashboard', "href": '#/dashboard', }]);
-    else
-      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Evaluation tasks', "href": '#/tasks', }]);
+    if (e.detail.id === "getstarted") {
+      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home', "href": '#'}, {"id":"dashboard", "text": 'Dashboard', "href": '#/getstarted', }]);
+    }
+    else {
+      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home', "href": '#'}, {"id":"dashboard", "text": 'Evaluation tasks', "href": '#/tasks', }]);
+    }
+    setCurrentPage(e.detail.id);
+  }
+
+  const handleStart = e => {
+    setCurrentPage("tasks");
   }
 
     return (
@@ -84,12 +90,12 @@ const App = ({ signOut, user }) => {
       navigation={
       <Navigation 
         onFollowHandler={handleHavItemClick}
-        selectedItems={["dasboard"]}
+        selectedItems={["getstarted"]}
         activeHref={activeNavHref}
         items={
         [
-          { type: 'link', id:"dashboard", text: 'Dashboard', href:"#/dashboard" },
-          { type: 'link', id:"tasks", text: 'Evaluation Tasks', href:"#/tasks" },
+          { type: 'link', id:"getstarted", text: 'Get Started', "href": '#/getstarted', },
+          { type: 'link', id:"tasks", text: 'Evaluation Tasks', "href": '#/tasks', },
           { type: 'divider' },
           {
             type: 'link', text: 'Documentation', external: true, href: '#/documentation',
@@ -116,7 +122,7 @@ const App = ({ signOut, user }) => {
         </SpaceBetween>
       }
       content={
-        currentPage === "tasks"?< TaskList user={user} onItemClick={handleItemClick} onSelectionChange={onSelectionChange}/>:<Dashboard></Dashboard>
+        currentPage === "tasks"?< TaskList user={user} onItemClick={handleItemClick} onSelectionChange={onSelectionChange}/>:<GetStarted onStart={handleStart} />
       }
     >
     </AppLayout>

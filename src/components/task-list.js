@@ -8,11 +8,31 @@ import { TaskImages } from './task-images';
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
+const PAGE_SIZE = 10;
 
 function TaskList ({user, onItemClick, onSelectionChange}) {
 
 
+  function getCurrentPageItems (items, curPage=null) {
+    if (curPage === null) curPage = currentPageIndex;
+    if (items === null || items.length === 0) return [];
+    else {
+      var result = [];
+      items.forEach((i, index) => {
+        //console.log(index, (currentPageIndex - 1) * PAGE_SIZE, currentPageIndex * PAGE_SIZE);
+        if (index >= ((curPage - 1) * PAGE_SIZE) && index < curPage * PAGE_SIZE) {
+          result.push(i);
+        }
+        return result;
+      }, result)
+    }
+    return result;
+  }
+  const [currentPageIndex, setCurrentPageIndex] = React.useState(1);
   const [items, setItems] = useState([]);
+  const [pageItems, setPageItems] = useState([]);
+  const [isDescending, setIsDescending] = useState(false);
+  const [filterText, setFilterText] = useState(null);
 
   const [selectedItems, setSelectedItems ] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -23,6 +43,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
   const [showImages, setShowImages] = useState(false); 
   const [loadingStatus, setLoadingStatus] = useState(null); //null, LOADING, LOADED 
 
+  
   useEffect(() => {
     if (items.length === 0 && loadingStatus === null) {
       setLoadingStatus("LOADING");
@@ -37,6 +58,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
         .then((data) => {
             var resp = JSON.parse(data.body)
             setItems(resp);
+            setPageItems(getCurrentPageItems(resp));
             setLoadingStatus("LOADED");
         })
         .catch((err) => {
@@ -77,6 +99,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
         .then((data) => {
             if (data.statusCode == "200")
             setItems([]);
+            setPageItems([]);
             setLoadingStatus(null);
           })
         .catch((err) => {
@@ -100,16 +123,18 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
   const handleBackToList = e => {
     // reload the list
     setItems([]);
-    setLoadingStatus(null);
+    setPageItems([]);
+    setSelectedItems([]);
     setShowDetail(false);
     setShowReport(false);
     setShowImages(false);
+    setLoadingStatus(null);
   }
 
   const handleCreateSubmit = e => {
+    setShowCreate(false);    
     setSelectedItems([e.task]);
     setShowDetail(true);
-    setShowCreate(false);    
   }
 
   const handleDelete = e =>{
@@ -117,13 +142,77 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
   }
 
   const handleReport = e => {
+    if (e.task !== undefined)
+      setSelectedItems([e.task]);
     setShowReport(true);
     setShowDetail(false);
   }
   const handleImages = e => {
+    if (e.task !== undefined)
+      setSelectedItems([e.task]);
     setShowImages(true);
     setShowDetail(false);
+}
+  const handleSortingChange = e => {
+    //console.log(e);
+    if (items.length == 0)
+      return
+
+    let is = items.map(i=> i);
+    var sortingField = e.detail.sortingColumn.sortingField;
+    if (!isDescending) {
+      is.sort( (a, b) => {
+        if (sortingField === "total_files")
+          return a[sortingField] - b[sortingField];
+        if (a[sortingField] < b[sortingField]) {
+          return -1;
+        }
+        if (a[sortingField] > b[sortingField]) {
+          return 1;
+        }
+      });
+    }
+    else {
+      is.reverse( (a, b) => {
+        if (sortingField === "total_files")
+          return a[sortingField] - b[sortingField];
+
+        if (a[sortingField] < b[sortingField]) {
+          return -1;
+        }
+        if (a[sortingField] > b[sortingField]) {
+          return 1;
+        }
+      });
+    }
+    setIsDescending(!isDescending);
+    setItems(is);
+    setPageItems(getCurrentPageItems(is));
   }
+
+const handlePaginationChange = e => {
+  console.log(e);
+  setCurrentPageIndex(e.detail.currentPageIndex);
+  setPageItems(getCurrentPageItems(items, e.detail.currentPageIndex));
+}
+
+const handleFilterChaneg = e => {
+  setFilterText(e.detail.filteringText);
+  if (filterText === null || filterText.length == 0) {
+    setItems(items);
+    setPageItems(getCurrentPageItems(items));
+  }
+  else if (filterText !== null) {
+    let result = []
+    items.forEach((i) => {
+      if (i.name.toLowerCase().includes(e.detail.filteringText.toLowerCase())) {
+        result.push(i);
+      }
+      return result;
+    }, result)
+    setPageItems(getCurrentPageItems(result));
+  }
+}
 
   return (
       <div> <br/>
@@ -133,6 +222,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
         <Table
           loading={loadingStatus === "LOADING"}
           loadingText="Loading tasks"
+          onSortingChange={handleSortingChange}
           onSelectionChange={({ detail }) => {
             setSelectedItems(detail.selectedItems);
             }
@@ -187,7 +277,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
               minWidth: 100,
             },
           ]}
-          items={items}
+          items={pageItems}
           selectionType="single"
           trackBy="id"
           empty={
@@ -205,8 +295,9 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
           }
           filter={
             <TextFilter
-              filteringPlaceholder="Find resources"
-              filteringText=""
+              filteringPlaceholder="Find tasks"
+              filteringText={filterText}
+              onChange={handleFilterChaneg}
             />
           }
           header={
@@ -226,8 +317,9 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
           }
           pagination={
             <Pagination
-              currentPageIndex={1}
-              pagesCount={2}
+              currentPageIndex={currentPageIndex}
+              onChange={handlePaginationChange}
+              pagesCount={items !== null?Math.ceil(items.length/PAGE_SIZE,0): 1}
               ariaLabels={{
                 nextPageLabel: "Next page",
                 previousPageLabel: "Previous page",

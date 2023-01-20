@@ -172,24 +172,34 @@ function TaskReport ({selectedTask, onBack}) {
         }
         >
 
-        <ColumnLayout columns="4" variant="text-grid">
+        <ColumnLayout columns="3" variant="text-grid">
           <div>
             <Box variant="awsui-key-label">Total number of images</Box>
             <Box variant="awsui-value-large">{parseInt(task.total_files).toLocaleString("en-US")}</Box>
           </div>
           <div>
-            <Box variant="awsui-key-label">Images labled by Rekognition</Box>
+            <Box variant="awsui-key-label">Images labeled by Rekognition as inappropriate</Box>
             <Box variant="awsui-value-large">{report !== null?report.labeled.toLocaleString("en-US"):0}</Box>
           </div>
+          <div>
+            <Box variant="awsui-key-label">Rekognition label ratio</Box>
+            <Box variant="awsui-value-large">{report !== null?(report.labeled*100/parseInt(task.total_files)).toFixed(2)+"%":0}</Box>
+          </div>
+        </ColumnLayout>
+        <ColumnLayout columns="3" variant="text-grid">
           <div>
             <Box variant="awsui-key-label">Human reviewed images</Box>
             <Box variant="awsui-value-large">{report !== null?report.reviewed.toLocaleString("en-US"):0}</Box>
           </div>
           <div>
-            <Box variant="awsui-key-label">False positive / True positive</Box>
-            <Box variant="awsui-value-large">{report !== null?report.fp.toLocaleString("en-US"):0} / {report !== null?report.tp.toLocaleString("en-US"):0}</Box>
+            <Box variant="awsui-key-label">False positive images</Box>
+            <Box variant="awsui-value-large">{report !== null?report.fp.toLocaleString("en-US"):0}</Box>
           </div>
-        </ColumnLayout>
+          <div>
+            <Box variant="awsui-key-label">True positive images</Box>
+            <Box variant="awsui-value-large">{report !== null?report.tp.toLocaleString("en-US"):0}</Box>
+          </div>
+          </ColumnLayout>
       </Container>
     )
 

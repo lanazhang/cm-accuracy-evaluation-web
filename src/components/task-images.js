@@ -4,12 +4,14 @@ import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resourc
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
+const PAGE_SIZE = 15;
 
 function TaskImages ({selectedTask, onBack}) {
-    const [selectedItems, setSelectedItems ] = useState([]);
     const [task, setTask] = useState(selectedTask);
     const [images, setImages] = useState(null);
     const [loadingStatus, setLoadingStatus] = useState(null); // null, LOADING, LOADED
+    const [currentPageIndex, setCurrentPageIndex] = React.useState(1);
+    const [currentImages, setCurrentImages] = useState(null);
 
     const [topCategoryFilter, setTopCategoryFilter] = useState(null);
     const [subCategoryFilter, setSubCategoryFilter] = useState(null);
@@ -23,7 +25,23 @@ function TaskImages ({selectedTask, onBack}) {
             reloadImages();
         }
       })
-    
+
+      function getCurrentPageImages (items, curPage=null) {
+        if (curPage === null) curPage = currentPageIndex;
+        if (items === null || items.length === 0) return [];
+        else {
+          var result = [];
+          items.forEach((i, index) => {
+            //console.log(index, (currentPageIndex - 1) * PAGE_SIZE, currentPageIndex * PAGE_SIZE);
+            if (index >= ((curPage - 1) * PAGE_SIZE) && index < curPage * PAGE_SIZE) {
+              result.push(i);
+            }
+            return result;
+          }, result)
+        }
+        return result;
+      }    
+
       function reloadImages() {
         setLoadingStatus("LOADING");
         fetch(ACCURACY_EVAL_SERVICE_URL + 'report/images', {
@@ -44,6 +62,7 @@ function TaskImages ({selectedTask, onBack}) {
           .then((data) => {
               var j = JSON.parse(data.body)
               setImages(j);
+              setCurrentImages(getCurrentPageImages(j))
               setLoadingStatus("LOADED");
           })
           .catch((err) => {
@@ -69,6 +88,7 @@ function TaskImages ({selectedTask, onBack}) {
         })
         setSubCategories(sub);
         setLoadingStatus(null);
+        setCurrentPageIndex(1);
       }
   
       const handleSubCategoryItemClick = e => {
@@ -80,6 +100,7 @@ function TaskImages ({selectedTask, onBack}) {
         else  
           setSubCategoryFilter(e.detail.id);
         setLoadingStatus(null);
+        setCurrentPageIndex(1);
       }
   
       const handleTypeItemClick = e => {
@@ -91,6 +112,7 @@ function TaskImages ({selectedTask, onBack}) {
         else
           setTypeFilter(e.detail.id);
         setLoadingStatus(null);
+        setCurrentPageIndex(1);
       }
   
       const handleConfidenceItemClick = e => {
@@ -98,6 +120,7 @@ function TaskImages ({selectedTask, onBack}) {
           return;
         setConfidenceThreshold(parseInt(e.detail.id));
         setLoadingStatus(null);
+        setCurrentPageIndex(1);
       } 
   
       const handleReset = e => {
@@ -106,6 +129,13 @@ function TaskImages ({selectedTask, onBack}) {
         setConfidenceThreshold(null);
         setTypeFilter(null);
         setLoadingStatus(null);
+        setCurrentPageIndex(1);
+      }
+
+      const handlePaginationChange = e => {
+        console.log(e);
+        setCurrentPageIndex(e.detail.currentPageIndex);
+        setCurrentImages(getCurrentPageImages(images, e.detail.currentPageIndex));
       }
 
     const Filter = () => (
@@ -114,7 +144,7 @@ function TaskImages ({selectedTask, onBack}) {
           <Box float='right'>
                 {loadingStatus === "LOADING"?<Spinner />
                 :<div /> } 
-           &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null} >Reset</Button>    
+           &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null && currentPageIndex == 1} >Reset</Button>    
            &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
           </Box>
         </ColumnLayout>
@@ -202,7 +232,7 @@ function TaskImages ({selectedTask, onBack}) {
                     { cards: 1 },
                     { minWidth: 230, cards: 3 }
                 ]}
-                items={images !== null?images:[]}
+                items={currentImages !== null?currentImages:[]}
                 loadingText="Loading resources"
                 empty={
                     <Box textAlign="center" color="inherit">
@@ -217,8 +247,35 @@ function TaskImages ({selectedTask, onBack}) {
                     <Button>Create resource</Button>
                     </Box>
                 }
-                header={<Header>Images labled by Rekognition</Header>}
+                header={<Header>Images labled by Rekognition ({images === null? 0 :images.length})</Header>}
+                pagination={
+                    <Pagination
+                      currentPageIndex={currentPageIndex}
+                      onChange={handlePaginationChange}
+                      pagesCount={images !== null?Math.ceil(images.length/PAGE_SIZE,0): 1}
+                      ariaLabels={{
+                        nextPageLabel: "Next page",
+                        previousPageLabel: "Previous page",
+                        pageLabel: pageNumber =>
+                          `Page ${pageNumber} of all pages`
+                      }}
+                    />
+                  }
+        
                 />
+                <Box float='right'>
+                <Pagination
+                      currentPageIndex={currentPageIndex}
+                      onChange={handlePaginationChange}
+                      pagesCount={images !== null?Math.ceil(images.length/PAGE_SIZE,0): 1}
+                      ariaLabels={{
+                        nextPageLabel: "Next page",
+                        previousPageLabel: "Previous page",
+                        pageLabel: pageNumber =>
+                          `Page ${pageNumber} of all pages`
+                      }}
+                    />
+                </Box>
            </div>
     );
 }
