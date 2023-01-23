@@ -5,9 +5,8 @@ import { TaskDetail } from './task-detail';
 import { TaskCreate } from "./task-create";
 import { TaskReport } from './task-report';
 import { TaskImages } from './task-images';
+import { FetchData } from "../resources/data-provider";
 
-const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
-const API_KEY = process.env.REACT_APP_API_KEY;
 const PAGE_SIZE = 10;
 
 function TaskList ({user, onItemClick, onSelectionChange}) {
@@ -41,22 +40,15 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
   const [showDetail, setShowDetail] = useState(false); 
   const [showReport, setShowReport] = useState(false); 
   const [showImages, setShowImages] = useState(false); 
-  const [loadingStatus, setLoadingStatus] = useState(null); //null, LOADING, LOADED 
-
+  const [loadingStatus, setLoadingStatus] = useState(null); //null, LOADING, LOADED
+  
   
   useEffect(() => {
     if (items.length === 0 && loadingStatus === null) {
       setLoadingStatus("LOADING");
-      fetch(ACCURACY_EVAL_SERVICE_URL + 'task/tasks', {
-        method: 'GET',
-        headers: {
-           'Content-type': 'application/json; charset=UTF-8',
-           'x-api-key': API_KEY
-        },
-        })
-        .then((response) => response.json())
+      FetchData('/task/tasks', "get")
         .then((data) => {
-            var resp = JSON.parse(data.body)
+            var resp = JSON.parse(data.body);
             setItems(resp);
             setPageItems(getCurrentPageItems(resp));
             setLoadingStatus("LOADED");
@@ -76,7 +68,7 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
     setShowCreate(false);
   }
 
-  const handleDeleteSubmit = e => {
+  async function handleDeleteSubmit(e)  {
     setShowDelete(false);
     var si = Object.assign({}, selectedItems[0]);
     si.status = "DELETING"
@@ -85,18 +77,9 @@ function TaskList ({user, onItemClick, onSelectionChange}) {
     setLoadingStatus("LOADING");
 
     if (selectedItems !== null && selectedItems.length > 0) {
-      fetch(ACCURACY_EVAL_SERVICE_URL + 'task/task', {
-        method: 'DELETE',
-        headers: {
-           'Content-type': 'application/json; charset=UTF-8',
-           'x-api-key': API_KEY
-        },
-        body: JSON.stringify({
-          id: selectedItems[0].id
-        }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
+      FetchData("/task/delete-task", "post", {
+        id: selectedItems[0].id
+      }).then((data) => {
             if (data.statusCode == "200")
             setItems([]);
             setPageItems([]);

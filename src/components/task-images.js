@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Alert} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
+import { FetchData } from "../resources/data-provider";
 
-const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
-const API_KEY = process.env.REACT_APP_API_KEY;
 const PAGE_SIZE = 15;
 
 function TaskImages ({selectedTask, onBack}) {
@@ -44,22 +43,13 @@ function TaskImages ({selectedTask, onBack}) {
 
       function reloadImages() {
         setLoadingStatus("LOADING");
-        fetch(ACCURACY_EVAL_SERVICE_URL + 'report/images', {
-          method: 'POST',
-          body: JSON.stringify({
+        FetchData('/report/images', 'post', {
             id: task.id,
             top_category: topCategoryFilter,
             sub_category: subCategoryFilter,
             type: typeFilter,
             confidence_threshold: confidenceThreshold,
-          }),
-          headers: {
-              'Content-type': 'application/json; charset=UTF-8',
-              'x-api-key': API_KEY
-          },
-          })
-          .then((response) => response.json())
-          .then((data) => {
+          }).then((data) => {
               var j = JSON.parse(data.body)
               setImages(j);
               setCurrentImages(getCurrentPageImages(j))

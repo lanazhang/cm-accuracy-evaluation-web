@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Header, FormField, Input, Modal, SpaceBetween, Container, Alert, Textarea, Popover, StatusIndicator} from '@cloudscape-design/components';
-import { S3Client } from "@aws-sdk/client-s3";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { Link } from '@aws-amplify/ui-react';
+import { FetchData } from "../resources/data-provider";
 
 
 function TaskCreate ({user, onSubmit, onDismiss}) {
-  const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
-  const API_KEY = process.env.REACT_APP_API_KEY;
 
   const [userName, setUserName] = useState(user.username);
   const [taskName, setTaskName] = useState("");
@@ -38,22 +34,11 @@ function TaskCreate ({user, onSubmit, onDismiss}) {
     }
 
     if (taskName.length > 0) {
-       fetch(ACCURACY_EVAL_SERVICE_URL + 'task/create-task', {
-        method: 'PUT',
-        body: JSON.stringify(
-           {
-               "task_name": taskName,
-               "task_description": taskDescription,
-               "created_by": userName
-           }
-        ),
-        headers: {
-           'Content-type': "application/json",
-           'x-api-key': API_KEY
-        },
-        })
-        .then((response) => response.json())
-        .then((data) => {
+      FetchData("/task/create-task", "put", {
+        "task_name": taskName,
+        "task_description": taskDescription,
+        "created_by": userName
+    }).then((data) => {
             var resp = JSON.parse(data.body);
             console.log(resp);
             setSubmitSuccessFlag(true);
@@ -84,7 +69,7 @@ function TaskCreate ({user, onSubmit, onDismiss}) {
       visible={true}
       onSubmit={handleSubmit}
       onDismiss={onDismiss}
-      size="large"
+      //size="large"
       header="Step 1: initiate an image accuracy evaluation task"
       closeAriaLabel="Close dialog"
       footer={

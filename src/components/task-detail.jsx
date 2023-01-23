@@ -1,27 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  ColumnLayout,
-  Container,
-  Header,
-  SpaceBetween,
-  StatusIndicator,
-  Link,
-  Pagination,
-  Popover,
-  Modal,
-  Alert,
-  ProgressBar,
-  ExpandableSection,
-  Flashbar,
-  Spinner
-} from '@cloudscape-design/components';
+import { Box, Button, ColumnLayout,Header,SpaceBetween,StatusIndicator,Link,Popover,Modal,Alert,ProgressBar,ExpandableSection,Flashbar,Spinner} from '@cloudscape-design/components';
+import { FetchData } from "../resources/data-provider";
 
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
 const API_KEY = process.env.REACT_APP_API_KEY;
 
-
+const REFRESH_INTERVAL_MS = 5000;
 
 function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
 
@@ -38,7 +22,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
   const [actions, setActions] = useState([]);
   const [showModerateModal, setShowModerateModal]= useState(false);
 
-  const [refreshInterval, setRefreshInterval] = useState(5);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
   // Status values: ["CREATED", "MODERATING", "MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED", "FAILED"]
   // Action values: ["TO_S3", "START_MOD", "MOD_PROGRESS", "GO_TO_A2I", "REVIEW_PROGRESS", "CHECK_REPORT"]
@@ -109,62 +93,35 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
     setShowModerateModal(false);
     if (!moderationSubmittedFlag)
     {
-      fetch(ACCURACY_EVAL_SERVICE_URL + 'task/start-moderation', {
-        method: 'POST',
-        body: JSON.stringify({
-          id: task.id
-        }),
-        headers: {
-           'Content-type': 'application/json; charset=UTF-8',
-           'x-api-key': API_KEY
-        },
-        })
-        .then((response) => response.json())
-        .then((data) => {
+      setModerationSubmittedFlag(true);
+      FetchData('/task/start-moderation', "post", {
+        id: task.id
+      }).then((data) => {
             var j = JSON.parse(data.body)
             setTask(j);
-            setModerationSubmittedFlag(true);
             reloadTask();
         })
         .catch((err) => {
+          setModerationSubmittedFlag(false);
           console.log(err.message);
         });
     }
   }
 
   useEffect(() => {
-    console.log("//////");
-    
-    // Auto refresh 
-    console.log(showModerateModal);
     if (loadingStatus === null) {
-      reloadTask();
+     reloadTask();
     }
-    else {
-      if (refreshInterval > 0 && !showModerateModal) {
-        const interval = setInterval(reloadTask, refreshInterval);
-        return () => clearInterval(interval);
-      }
-    }
+  });
 
-  }, [refreshInterval]);
-
-  function reloadTask() {
+  async function reloadTask() {
     //console.log(task);
     setLoadingStatus("LOADING");
     setModerationSubmittedFlag(false);
-    fetch(ACCURACY_EVAL_SERVICE_URL + 'task/task-with-count', {
-      method: 'POST',
-      body: JSON.stringify({
-        id: task.id
-      }),
-      headers: {
-         'Content-type': 'application/json; charset=UTF-8',
-         'x-api-key': API_KEY
-      },
-      })
-      .then((response) => response.json())
-      .then((data) => {
+
+    FetchData('/task/task-with-count',"post", {
+      id: task.id
+    }).then((data) => {
           var j = JSON.parse(data.body)
           setTask(j);
           setPanelStatus(j);
@@ -174,7 +131,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
         console.log(err.message);
         setLoadingStatus("LOADED");
       });
-
+    return;
   }
 
   const handleRefresh = e => {
@@ -366,7 +323,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
               </div>
               :
               loadingStatus === "LOADING"?<Spinner />
-              :<Button variant="normal" iconName="refresh" onClick={handleRefresh} />
+              :<div>Refresh to update task status - <Button variant="normal" iconName="refresh" onClick={handleRefresh} /></div>
             }
               <Button variant="normal" onClick={onBack}>
                 Back to list

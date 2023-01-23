@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {Container, ColumnLayout, Grid, Box, Link, Header, StatusIndicator,PieChart, Button, BarChart, AreaChart, ButtonDropdown, Spinner} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
-
-const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
-const API_KEY = process.env.REACT_APP_API_KEY;
+import { FetchData } from "../resources/data-provider";
 
 function TaskReport ({selectedTask, onBack}) {
     const [task, setTask] = useState(selectedTask);
@@ -25,22 +23,14 @@ function TaskReport ({selectedTask, onBack}) {
   
     function reloadReport() {
       setLoadingStatus("LOADING");
-      fetch(ACCURACY_EVAL_SERVICE_URL + 'report/report', {
-        method: 'POST',
-        body: JSON.stringify({
-          id: task.id,
-          top_category: topCategoryFilter,
-          sub_category: subCategoryFilter,
-          type: typeFilter,
-          confidence_threshold: confidenceThreshold,
-        }),
-        headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-            'x-api-key': API_KEY
-        },
-        })
-        .then((response) => response.json())
-        .then((data) => {
+
+      FetchData("/report/report", "post", {
+        id: task.id,
+        top_category: topCategoryFilter,
+        sub_category: subCategoryFilter,
+        type: typeFilter,
+        confidence_threshold: confidenceThreshold,
+      }).then((data) => {
             var j = JSON.parse(data.body)
             setReport(j);
             setLoadingStatus("LOADED");

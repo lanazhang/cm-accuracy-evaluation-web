@@ -1,3 +1,5 @@
+import { Auth, API } from 'aws-amplify';
+
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 const ACCURACY_EVAL_SERVICE_URL = process.env.REACT_APP_ACCURACY_EVAL_SERVICE_URL;
@@ -43,4 +45,29 @@ const ConfidenceValue = [
        { id: "90", text: "90%" },
      ]
 
-export {ModerationCategories, TypeFilterValue, ConfidenceValue};
+async function FetchData(path, method="post", body=null) {
+  const apiName = 'CmAccuracyEvalSrv';
+  const init = {
+    headers: {
+      Authorization: `Bearer ${(await Auth.currentSession())
+        .getIdToken()
+        .getJwtToken()}`
+    }
+  };
+
+  if (body !== null) {
+    init["body"] = body;
+  }
+
+  switch(method) {
+    case "get":
+      return await API.get(apiName, path, init);
+    case "post":
+      return await API.post(apiName, path, init);
+    case "put":
+      return await API.put(apiName, path, init);
+  }
+  return null;
+}
+
+export {ModerationCategories, TypeFilterValue, ConfidenceValue, FetchData};

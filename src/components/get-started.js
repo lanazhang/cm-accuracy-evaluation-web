@@ -22,7 +22,7 @@ function GetStarted ({onStart}) {
                 <Header
                     variant="h1"
                     info={<Link>Info</Link>}
-                    description="A tool that helps you to evaluate Amazon Rekognition content moderation accuracy. "
+                    description="A tool that helps you to evaluate Amazon Rekognition content moderation accuracy using your own data. "
                     actions={
                         <Button onClick={onStart}>Get Started</Button>
                     }
@@ -38,13 +38,14 @@ function GetStarted ({onStart}) {
                     <img src={diagram} alt="Evaluation work flow" width="100%"></img>
                     <Box variant="p">
                         This tool helps you evaluate Amazon Rekognition Content Moderation's false-positive rate based on your own dataset. 
-                        For a reliable result, we recommend you use a dataset with 10 - 50 thousand images, as fewer images may lead to a skewed result and a biased conclusion. 
-                        <br/>
-                        <br/>There are a few steps to complete the process:
-                        <br/>1. Initiate a new task and upload your dataset to the instructed S3 bucket folder.
-                        <br/>2. Start the moderation task once all the images are in place. Rekognition will then start to moderate images one by one.
-                        <br/>3. Rekognition will label some of your images as inappropriate. You then can review these images using A2I to provide human input: if the image truly has inappropriate information (true-positive) or not (false-positive).
-                        <br/>4. The tool will combine Rekognition moderation results and human inputs to produce an accurate report.
+                        For a reliable result, we recommend you use a dataset with 10-50 thousand images, as fewer images may lead to a skewed result and a biased conclusion. 
+                        <p>There are a few steps to complete the process:</p>
+                        <ol>
+                        <li>Initiate a new task and upload your dataset to the instructed S3 bucket folder.</li>
+                        <li>Start the moderation task once all the images are in place. Rekognition will then start to moderate images one by one.</li>
+                        <li>Rekognition will label some of your images as inappropriate. You then can review these images using A2I to provide human input: if the image truly has inappropriate information (true-positive) or not (false-positive).</li>
+                        <li>The tool will combine Rekognition moderation results and human inputs to produce an accuracy report.</li>
+                        </ol>
                     </Box>
                 </Container>
                 {/*
