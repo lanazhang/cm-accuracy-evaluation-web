@@ -291,7 +291,7 @@ const handleFilterChaneg = e => {
               <SpaceBetween size="xs" direction="horizontal">
                 {/* <Button disabled={!isOnlyOneSelected}>Edit</Button>*/}
                 <Button onClick={handleReport} disabled={selectedItems.length === 0 || selectedItems[0].status !== "COMPLETED"} >Check report</Button>
-                <Button onClick={handleImages} disabled={selectedItems.length === 0 || selectedItems[0].status !== "COMPLETED"}>Review images</Button>
+                <Button onClick={handleImages} disabled={selectedItems.length === 0 || !["MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED"].includes(selectedItems[0].status)}>Review images</Button>
                 <Button onClick={handleDelete} disabled={selectedItems.length === 0 || selectedItems[0].status == "MODERATING"}>Delete task</Button>
                 <Button variant="primary" onClick={handleTaskCreate}>Initiate a task</Button>
               </SpaceBetween>

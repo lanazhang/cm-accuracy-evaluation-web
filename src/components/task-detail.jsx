@@ -25,7 +25,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
   const [lastRefresh, setLastRefresh] = useState(null);
 
   // Status values: ["CREATED", "MODERATING", "MODERATION_COMPLETED", "HUMAN_REVIEWING", "COMPLETED", "FAILED"]
-  // Action values: ["TO_S3", "START_MOD", "MOD_PROGRESS", "GO_TO_A2I", "REVIEW_PROGRESS", "CHECK_REPORT"]
+  // Action values: ["TO_S3", "START_MOD", "MOD_PROGRESS", "GO_TO_A2I", "REVIEW_PROGRESS", "CHECK_REPORT", "REVIEW_IMAGES"]
   function setPanelStatus(t) {
     if(t !== null && t.status !== null) {
       // Summary section
@@ -58,7 +58,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           setExpandModeration(false);
           setShowHumanReview(true);
           setExpandHumanReview(true);
-          setActions(["GO_TO_A2I"]);
+          setActions(["GO_TO_A2I","REVIEW_IMAGES"]);
           break;    
         case "HUMAN_REVIEWING":
           setShowSummary(true);
@@ -67,7 +67,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           setShowHumanReview(true);
           setExpandModeration(true);
           setExpandHumanReview(true);
-          setActions(["REVIEW_PROGRESS"]);
+          setActions(["REVIEW_PROGRESS","REVIEW_IMAGES"]);
           break;    
         case "COMPLETED":
           setShowSummary(true);
@@ -76,7 +76,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           setShowHumanReview(true);
           setExpandModeration(true);
           setExpandHumanReview(true);
-          setActions(["CHECK_REPORT"]);
+          setActions(["CHECK_REPORT","REVIEW_IMAGES"]);
           break;      
         }
     }
@@ -237,7 +237,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
       <Alert>
           <b>You have initiated an accuracy evaluation task successfully!</b>
           <br/>As for the next step, you will need to copy the images to the S3 bucket folder: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b> provisioned for this task. Then come back to continue the process. 
-          <br/>We recommend providing more than 10,000 images for better accuracy evaluation. Fewer images will provide less data points and potentially produce a skewed result.
+          <br/>We recommend providing more than 5,000 images for better accuracy evaluation. Fewer images will provide less data points and potentially produce a skewed result.
           <br/>If your sample images are already in an S3 bucket, use the below bash command to bulk copy images from the source S3 bucket to the one set up for this evaluation task. (Ensure your IAM user/role has proper access to both buckets.)
           <br/><br/>
           <span className="custom-wrapping">
@@ -288,7 +288,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           <ProgressBar
             variant="flash"
             value={(task.processed * 100)/task.total_files}
-            label="Rekognition image moderation progress"
+            label="Rekognition image moderation progress. Model will flag everything above 50%. You can change that confidence score later on the results page."
           />
       )}]}>
 
@@ -316,15 +316,14 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           actions={
             <Box float="right">
             <SpaceBetween direction="horizontal" size="xs">
-            {actions.includes("CHECK_REPORT")?
-              <div>
-              <Button variant='primary' onClick={handleReportClick}>Review report</Button>&nbsp;
-              <Button variant='primary' onClick={handleImagesClick}>Check images</Button>
-              </div>
-              :
-              loadingStatus === "LOADING"?<Spinner />
-              :<div>Refresh to update task status - <Button variant="normal" iconName="refresh" onClick={handleRefresh} /></div>
-            }
+              {loadingStatus === "LOADING"?<Spinner />:
+                task.status !== 'COMPLETED'?
+                <div>Refresh to update task status - <Button variant="normal" iconName="refresh" onClick={handleRefresh} /></div>:<div/>}
+              {actions.includes("CHECK_REPORT")?
+              <Button variant='primary' onClick={handleReportClick}>Review report</Button>:<div/>}
+              {actions.includes("REVIEW_IMAGES")?
+              <Button variant='primary' onClick={handleImagesClick}>Check images</Button>:<div/>}
+              
               <Button variant="normal" onClick={onBack}>
                 Back to list
               </Button>

@@ -38,7 +38,7 @@ function GetStarted ({onStart}) {
                     <img src={diagram} alt="Evaluation work flow" width="100%"></img>
                     <Box variant="p">
                         This tool helps you evaluate Amazon Rekognition Content Moderation's false-positive rate based on your own dataset. 
-                        For a reliable result, we recommend you use a dataset with 10-50 thousand images, as fewer images may lead to a skewed result and a biased conclusion. 
+                        For a reliable result, we recommend you use a dataset with 5,000+ images, as fewer images may lead to a skewed result and a biased conclusion. 
                         <p>There are a few steps to complete the process:</p>
                         <ol>
                         <li>Initiate a new task and upload your dataset to the instructed S3 bucket folder.</li>

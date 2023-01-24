@@ -93,14 +93,14 @@ function TaskCreate ({user, onSubmit, onDismiss}) {
         <br/>
         <form onSubmit={handleSubmit}>
             <SpaceBetween direction="vertical" size="l">
-              <FormField label="Task name" description="A unique name for the accuracy evaluation task should be at most 50 characters.">
+              <FormField label="Task name" >
                 <Input 
                   value={taskName} 
                   onChange={handletaskNameChange} 
                   ariaRequired={true} 
                   invalid={submitFlag && (taskName.trim().length === 0 || taskName.length > 50)} />
               </FormField>
-              <FormField label="Description" description="A description for the accuracy evaluation task should be at most 200 characters.">
+              <FormField label="Description" >
                 <Textarea 
                   value={taskDescription} 
                   onChange={handleDescriptionChange} 
