@@ -63,11 +63,11 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
         case "HUMAN_REVIEWING":
           setShowSummary(true);
           setExpandSummary(false);
-          setShowModeration(false);
+          setShowModeration(true);
           setShowHumanReview(true);
-          setExpandModeration(true);
+          setExpandModeration(false);
           setExpandHumanReview(true);
-          setActions(["REVIEW_PROGRESS","REVIEW_IMAGES"]);
+          setActions(["GO_TO_A2I","REVIEW_PROGRESS","REVIEW_IMAGES"]);
           break;    
         case "COMPLETED":
           setShowSummary(true);
@@ -182,7 +182,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           <Box variant="awsui-value-large">{task!==null && task["processed"] !== undefined?task.processed.toLocaleString('en-US'):""}</Box>
         </div>
         <div>
-          <Box variant="awsui-key-label">Total number of images labeled by Rekognition as inappropriate</Box>
+          <Box variant="awsui-key-label">Total number of images flagged by Rekognition as inappropriate</Box>
           <Box variant="awsui-value-large">{task!==null && task["labeled"] !== undefined?task.labeled.toLocaleString('en-US'):""}</Box>
         </div>  
       </ColumnLayout>
@@ -193,7 +193,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
     <div>
     <ColumnLayout columns={4} variant="text-grid">
         <div>
-          <Box variant="awsui-key-label">Rekognition labeled</Box>
+          <Box variant="awsui-key-label">Total number of images flagged by Rekognition as inappropriate</Box>
           <Box variant="awsui-value-large">{task!==null && task["labeled"] !== undefined?task.labeled.toLocaleString('en-US'):""}</Box>
         </div>  
         <div>
@@ -296,6 +296,8 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
     :<div/>}
 
     {actions.includes("REVIEW_PROGRESS")?
+      <div>
+      <br/>
       <Flashbar
       items={[
         {
@@ -307,6 +309,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           />
       )}]}>
       </Flashbar>
+      </div>
     :<div/>}
     </div>)
 

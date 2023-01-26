@@ -17,10 +17,11 @@ function TaskImages ({selectedTask, onBack}) {
     const [typeFilter, setTypeFilter] = useState(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(null);
     const [subCategories, setSubCategories] = useState(null);
-  
+
       useEffect(() => {
         // Auto refresh 
         if (loadingStatus === null) {
+
             reloadImages();
         }
       })
@@ -42,8 +43,12 @@ function TaskImages ({selectedTask, onBack}) {
       }    
 
       function reloadImages() {
+        const queryParams = new URLSearchParams(window.location.search);
+        console.log(queryParams.get("unflag"));
+        var showUnflag = queryParams.get("unflag");
+        
         setLoadingStatus("LOADING");
-        FetchData('/report/images', 'post', {
+        FetchData(showUnflag?'/report/images-unflag':'/report/images', 'post', {
             id: task.id,
             top_category: topCategoryFilter,
             sub_category: subCategoryFilter,

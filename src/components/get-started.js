@@ -35,7 +35,7 @@ function GetStarted ({onStart}) {
             }
             >
                 <Container>
-                    <img src={diagram} alt="Evaluation work flow" width="100%"></img>
+                    <img src={diagram} alt="Evaluation work flow" width="80%"></img>
                     <Box variant="p">
                         This tool helps you evaluate Amazon Rekognition Content Moderation's false-positive rate based on your own dataset. 
                         For a reliable result, we recommend you use a dataset with 5,000+ images, as fewer images may lead to a skewed result and a biased conclusion. 
