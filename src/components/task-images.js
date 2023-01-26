@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Alert} from '@cloudscape-design/components';
+import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Toggle} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
 import { FetchData } from "../resources/data-provider";
 
@@ -17,11 +17,15 @@ function TaskImages ({selectedTask, onBack}) {
     const [typeFilter, setTypeFilter] = useState(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(null);
     const [subCategories, setSubCategories] = useState(null);
+    const [showUnflag, setShowUnflag] = useState(null);
+    const [showUnflagToggle, setShowUnflagToggle] = useState(false);
 
       useEffect(() => {
         // Auto refresh 
         if (loadingStatus === null) {
-
+            const queryParams = new URLSearchParams(window.location.search);
+            setShowUnflagToggle(queryParams.get("unflag"));
+            
             reloadImages();
         }
       })
@@ -42,13 +46,11 @@ function TaskImages ({selectedTask, onBack}) {
         return result;
       }    
 
-      function reloadImages() {
-        const queryParams = new URLSearchParams(window.location.search);
-        console.log(queryParams.get("unflag"));
-        var showUnflag = queryParams.get("unflag");
+      function reloadImages(unflag=false) {
+        console.log(unflag);
         
         setLoadingStatus("LOADING");
-        FetchData(showUnflag?'/report/images-unflag':'/report/images', 'post', {
+        FetchData(unflag?'/report/images-unflag':'/report/images', 'post', {
             id: task.id,
             top_category: topCategoryFilter,
             sub_category: subCategoryFilter,
@@ -128,7 +130,6 @@ function TaskImages ({selectedTask, onBack}) {
       }
 
       const handlePaginationChange = e => {
-        console.log(e);
         setCurrentPageIndex(e.detail.currentPageIndex);
         setCurrentImages(getCurrentPageImages(images, e.detail.currentPageIndex));
       }
@@ -181,6 +182,18 @@ function TaskImages ({selectedTask, onBack}) {
           >
             {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold).text}
           </ButtonDropdown>    
+          {showUnflagToggle?
+          <Toggle
+            onChange={({ detail }) =>
+              {
+                setShowUnflag(detail.checked);
+                reloadImages(detail.checked);
+              }
+            }
+            checked={showUnflag}
+          >
+            Show unflagged images (This is a hidden feature for debugging. The page may time out if you have more than 1,000 images.)
+          </Toggle>:<div />}
           </Container>
          </ColumnLayout>
          </div>
@@ -242,7 +255,7 @@ function TaskImages ({selectedTask, onBack}) {
                     <Button>Create resource</Button>
                     </Box>
                 }
-                header={<Header>Images labled by Rekognition ({images === null? 0 :images.length})</Header>}
+                header={<Header>Images flagged by Rekognition as inappropriate ({images === null? 0 :images.length})</Header>}
                 pagination={
                     <Pagination
                       currentPageIndex={currentPageIndex}

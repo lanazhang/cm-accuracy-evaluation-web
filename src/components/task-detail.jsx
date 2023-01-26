@@ -67,7 +67,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           setShowHumanReview(true);
           setExpandModeration(false);
           setExpandHumanReview(true);
-          setActions(["GO_TO_A2I","REVIEW_PROGRESS","REVIEW_IMAGES"]);
+          setActions(["GO_TO_A2I","CHECK_REPORT","REVIEW_PROGRESS","REVIEW_IMAGES"]);
           break;    
         case "COMPLETED":
           setShowSummary(true);
