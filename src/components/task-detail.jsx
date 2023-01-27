@@ -229,7 +229,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           </Box>
         }
         header="Start moderating images">
-        Amazon Rekognition will moderate the <b>{task.total_files}</b> images in the S3 bucket: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b> <br/>You should not add new images to the folder after the moderation process starts.
+        Amazon Rekognition will moderate the <b>{task.total_files}</b> images in the S3 bucket: <b>s3://{task.s3_bucket}/{task.s3_key_prefix}</b> <br/>Do not add new images to the folder after the moderation process starts.
       </Modal>
     </Box>:<div/>}
 
@@ -350,7 +350,7 @@ function TaskDetail ({selectedTask, onImageClick, onReportClick,  onBack}) {
           defaultExpanded={expandModeration} 
           variant="container" 
           headerText="Moderation summary"
-          headerDescription={task.labeled + ' / ' + task.total_files + ' images labeled by Rekognition image moderation API'}>
+          headerDescription={task.labeled + ' / ' + task.total_files + ' images flagged by Rekognition image moderation API'}>
             <ModerationSummary />
         </ExpandableSection>:<div/>}
         <br/>

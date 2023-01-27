@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Toggle} from '@cloudscape-design/components';
+import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Toggle, TextFilter} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
 import { FetchData } from "../resources/data-provider";
 
@@ -8,6 +8,7 @@ const PAGE_SIZE = 15;
 function TaskImages ({selectedTask, onBack}) {
     const [task, setTask] = useState(selectedTask);
     const [images, setImages] = useState(null);
+    const [filteredImages, setFilteredImages] = useState(null);
     const [loadingStatus, setLoadingStatus] = useState(null); // null, LOADING, LOADED
     const [currentPageIndex, setCurrentPageIndex] = React.useState(1);
     const [currentImages, setCurrentImages] = useState(null);
@@ -17,8 +18,10 @@ function TaskImages ({selectedTask, onBack}) {
     const [typeFilter, setTypeFilter] = useState(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(null);
     const [subCategories, setSubCategories] = useState(null);
-    const [showUnflag, setShowUnflag] = useState(null);
+    const [showUnflag, setShowUnflag] = useState(false);
     const [showUnflagToggle, setShowUnflagToggle] = useState(false);
+
+    const [filterText, setFilterText] = useState(null);
 
       useEffect(() => {
         // Auto refresh 
@@ -26,7 +29,7 @@ function TaskImages ({selectedTask, onBack}) {
             const queryParams = new URLSearchParams(window.location.search);
             setShowUnflagToggle(queryParams.get("unflag"));
             
-            reloadImages();
+            reloadImages(showUnflag);
         }
       })
 
@@ -47,7 +50,6 @@ function TaskImages ({selectedTask, onBack}) {
       }    
 
       function reloadImages(unflag=false) {
-        console.log(unflag);
         
         setLoadingStatus("LOADING");
         FetchData(unflag?'/report/images-unflag':'/report/images', 'post', {
@@ -57,9 +59,10 @@ function TaskImages ({selectedTask, onBack}) {
             type: typeFilter,
             confidence_threshold: confidenceThreshold,
           }).then((data) => {
-              var j = JSON.parse(data.body)
+              var j = JSON.parse(data.body);
               setImages(j);
-              setCurrentImages(getCurrentPageImages(j))
+              filterImagesByText(j,filterText);
+              setCurrentImages(getCurrentPageImages(j));
               setLoadingStatus("LOADED");
           })
           .catch((err) => {
@@ -127,11 +130,43 @@ function TaskImages ({selectedTask, onBack}) {
         setTypeFilter(null);
         setLoadingStatus(null);
         setCurrentPageIndex(1);
+        setFilterText(null);
+        setShowUnflagToggle(false);
       }
 
       const handlePaginationChange = e => {
         setCurrentPageIndex(e.detail.currentPageIndex);
         setCurrentImages(getCurrentPageImages(images, e.detail.currentPageIndex));
+      }
+
+      function filterImagesByText(all_images=null,text=null) {
+        if (text === null)
+          text = filterText;
+        if (all_images === null)
+          all_images = Object.assign({}, images);
+
+        let result = [];
+        // filter by name
+        if (text !== null && text.length > 0) {
+          all_images.forEach((i) => {
+            if (i.file_path.toLowerCase().includes(text.toLowerCase())) {
+              result.push(i);
+            }
+            return result;
+          }, result)                
+          console.log(result.length);
+          setFilteredImages(result);
+          setCurrentImages(getCurrentPageImages(result));
+        }
+        else {
+          setFilteredImages(all_images);
+          setCurrentImages(getCurrentPageImages(all_images));
+        }        
+      }
+
+      const handleFilterChange = e => {
+        setFilterText(e.detail.filteringText.trim());
+        filterImagesByText(images, e.detail.filteringText.trim());
       }
 
     const Filter = () => (
@@ -140,7 +175,7 @@ function TaskImages ({selectedTask, onBack}) {
           <Box float='right'>
                 {loadingStatus === "LOADING"?<Spinner />
                 :<div /> } 
-           &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null && currentPageIndex == 1} >Reset</Button>    
+           &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null && currentPageIndex == 1 && (filterText === null || filterText.length === 0) } >Reset</Button>    
            &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
           </Box>
         </ColumnLayout>
@@ -183,6 +218,8 @@ function TaskImages ({selectedTask, onBack}) {
             {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold).text}
           </ButtonDropdown>    
           {showUnflagToggle?
+          <div>
+            <br/>
           <Toggle
             onChange={({ detail }) =>
               {
@@ -192,8 +229,8 @@ function TaskImages ({selectedTask, onBack}) {
             }
             checked={showUnflag}
           >
-            Show unflagged images (This is a hidden feature for debugging. The page may time out if you have more than 1,000 images.)
-          </Toggle>:<div />}
+            Show unflagged images (This is a hidden feature for debugging purposes. The page may time out to display more than 3,000 images.)
+          </Toggle></div>:<div />}
           </Container>
          </ColumnLayout>
          </div>
@@ -241,26 +278,29 @@ function TaskImages ({selectedTask, onBack}) {
                     { minWidth: 230, cards: 3 }
                 ]}
                 items={currentImages !== null?currentImages:[]}
-                loadingText="Loading resources"
+                filter={
+                  <TextFilter filteringPlaceholder="Find images by file name" filteringText={filterText} 
+                      onChange={handleFilterChange} />
+                }
+                loadingText="Loading images"
                 empty={
                     <Box textAlign="center" color="inherit">
-                    <b>No resources</b>
+                    <b>No images</b>
                     <Box
                         padding={{ bottom: "s" }}
                         variant="p"
                         color="inherit"
                     >
-                        No resources to display.
+                        No images to display.
                     </Box>
-                    <Button>Create resource</Button>
                     </Box>
                 }
-                header={<Header>Images flagged by Rekognition as inappropriate ({images === null? 0 :images.length})</Header>}
+                header={<Header>Images flagged by Rekognition as inappropriate ({filteredImages === null? 0 :filteredImages.length})</Header>}
                 pagination={
                     <Pagination
                       currentPageIndex={currentPageIndex}
                       onChange={handlePaginationChange}
-                      pagesCount={images !== null?Math.ceil(images.length/PAGE_SIZE,0): 1}
+                      pagesCount={filteredImages !== null?Math.ceil(filteredImages.length/PAGE_SIZE,0): 1}
                       ariaLabels={{
                         nextPageLabel: "Next page",
                         previousPageLabel: "Previous page",
@@ -275,7 +315,7 @@ function TaskImages ({selectedTask, onBack}) {
                 <Pagination
                       currentPageIndex={currentPageIndex}
                       onChange={handlePaginationChange}
-                      pagesCount={images !== null?Math.ceil(images.length/PAGE_SIZE,0): 1}
+                      pagesCount={filteredImages !== null?Math.ceil(filteredImages.length/PAGE_SIZE,0): 1}
                       ariaLabels={{
                         nextPageLabel: "Next page",
                         previousPageLabel: "Previous page",

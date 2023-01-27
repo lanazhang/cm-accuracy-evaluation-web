@@ -168,7 +168,7 @@ function TaskReport ({selectedTask, onBack}) {
             <Box variant="awsui-value-large">{parseInt(task.total_files).toLocaleString("en-US")}</Box>
           </div>
           <div>
-            <Box variant="awsui-key-label">Images labeled by Rekognition as inappropriate</Box>
+            <Box variant="awsui-key-label">Images flagged by Rekognition as inappropriate</Box>
             <Box variant="awsui-value-large">{report !== null?report.labeled.toLocaleString("en-US"):0}</Box>
           </div>
           <div>
