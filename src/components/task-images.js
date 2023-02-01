@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {Cards, Container, Box, Button, Badge, Header, Pagination, ColumnLayout, Spinner, ButtonDropdown, Link, Toggle, TextFilter} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
 import { FetchData } from "../resources/data-provider";
+import Slider from '@mui/material/Slider';
 
 const PAGE_SIZE = 15;
 
@@ -114,11 +115,11 @@ function TaskImages ({selectedTask, onBack}) {
         setLoadingStatus(null);
         setCurrentPageIndex(1);
       }
-  
+
       const handleConfidenceItemClick = e => {
-        if (parseInt(e.detail.id) == confidenceThreshold)
+        if (parseInt(e.target.value) == confidenceThreshold)
           return;
-        setConfidenceThreshold(parseInt(e.detail.id));
+        setConfidenceThreshold(parseInt(e.target.value));
         setLoadingStatus(null);
         setCurrentPageIndex(1);
       } 
@@ -179,8 +180,8 @@ function TaskImages ({selectedTask, onBack}) {
            &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
           </Box>
         </ColumnLayout>
-        <ColumnLayout columns="1" variant="text-grid">
         <Container float='left'>
+        <ColumnLayout columns="4" variant="text-grid">
           <ButtonDropdown
             onItemClick={handleTopCategoryItemClick}
             items={Object.keys(ModerationCategories).map((x) => {
@@ -193,7 +194,6 @@ function TaskImages ({selectedTask, onBack}) {
           >
             {topCategoryFilter === null? "Filter top level category": topCategoryFilter}
           </ButtonDropdown>       
-          &nbsp;  
           <ButtonDropdown
             onItemClick={handleSubCategoryItemClick}
             items={subCategories !== null? subCategories: []}
@@ -201,7 +201,6 @@ function TaskImages ({selectedTask, onBack}) {
           >
             {subCategoryFilter === null? "Filter secondary level category": subCategoryFilter}
           </ButtonDropdown> 
-          &nbsp;        
           <ButtonDropdown
             onItemClick={handleTypeItemClick}
             items={TypeFilterValue}
@@ -209,14 +208,35 @@ function TaskImages ({selectedTask, onBack}) {
           >
             {typeFilter === null? "Filter by review result": TypeFilterValue.find(t => t.id == typeFilter).text}
           </ButtonDropdown>  
-          &nbsp;    
-          <ButtonDropdown
-            onItemClick={handleConfidenceItemClick}
-            items={ConfidenceValue}
-            expandableGroups
-          >
-            {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold).text}
-          </ButtonDropdown>    
+          <div>
+        Select confidence threshold: <br/>
+        <Slider style={{width:200}}
+          defaultValue={50} 
+          value={confidenceThreshold}
+          min={50} max={100} 
+          size="medium" 
+          step="1" 
+          marks={[
+            {
+              value: 50,
+              label: "50%",
+            },
+            {
+              value: 75,
+              label: "75%",
+            },
+            {
+              value: 100,
+              label: "100%",
+            },
+          ]}
+          aria-label="Default" 
+          valueLabelDisplay="auto"
+          valueLabelFormat={value => <div>{value + '%'}</div>}
+          onChange={handleConfidenceItemClick}/>
+        </div> 
+        </ColumnLayout>
+        <ColumnLayout columns="1" variant="text-grid">
           {showUnflagToggle?
           <div>
             <br/>
@@ -231,8 +251,8 @@ function TaskImages ({selectedTask, onBack}) {
           >
             Show unflagged images (This is a hidden feature for debugging purposes. The page may time out to display more than 3,000 images.)
           </Toggle></div>:<div />}
+          </ColumnLayout>
           </Container>
-         </ColumnLayout>
          </div>
       )
 

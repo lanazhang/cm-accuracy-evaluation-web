@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Slider from '@mui/material/Slider';
 import {Container, ColumnLayout, Grid, Box, Link, Header, StatusIndicator,PieChart, Button, BarChart, AreaChart, ButtonDropdown, Spinner} from '@cloudscape-design/components';
 import {ModerationCategories, TypeFilterValue, ConfidenceValue} from '../resources/data-provider';
 import { FetchData } from "../resources/data-provider";
@@ -85,9 +86,9 @@ function TaskReport ({selectedTask, onBack}) {
     }
 
     const handleConfidenceItemClick = e => {
-      if (parseInt(e.detail.id) == confidenceThreshold)
+      if (parseInt(e.target.value) == confidenceThreshold)
         return;
-      setConfidenceThreshold(parseInt(e.detail.id));
+      setConfidenceThreshold(parseInt(e.target.value));
       setLoadingStatus(null);
     } 
 
@@ -118,8 +119,6 @@ function TaskReport ({selectedTask, onBack}) {
       <div>
       <ColumnLayout columns="1" variant="text-grid">
         <Box float='right'>
-
-
               {loadingStatus === "LOADING"?<Spinner />
               :<div /> } 
          &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null} >Reset</Button>    
@@ -127,8 +126,9 @@ function TaskReport ({selectedTask, onBack}) {
          &nbsp;<Button variant="normal" download={true} onClick={handleExport}>Export flagged images to CSV</Button>  
           {reportUrl !== null? <a href={reportUrl}>Download CSV</a>: <div/> }          </Box>
       </ColumnLayout>
-      <ColumnLayout columns="1" variant="text-grid">
-      <Container float='left'>
+      <br/>
+      <Container>
+      <ColumnLayout columns="4" variant="text-grid">
         <ButtonDropdown
           onItemClick={handleTopCategoryItemClick}
           items={Object.keys(ModerationCategories).map((x) => {
@@ -141,7 +141,6 @@ function TaskReport ({selectedTask, onBack}) {
         >
           {topCategoryFilter === null? "Filter top level category": topCategoryFilter}
         </ButtonDropdown>       
-        &nbsp;  
         <ButtonDropdown
           onItemClick={handleSubCategoryItemClick}
           items={subCategories !== null? subCategories: []}
@@ -149,24 +148,42 @@ function TaskReport ({selectedTask, onBack}) {
         >
           {subCategoryFilter === null? "Filter secondary level category": subCategoryFilter}
         </ButtonDropdown> 
-        &nbsp;        
         <ButtonDropdown
           onItemClick={handleTypeItemClick}
           items={TypeFilterValue}
           expandableGroups
         >
           {typeFilter === null? "Filter by review result": TypeFilterValue.find(t => t.id == typeFilter).text}
-        </ButtonDropdown>  
-        &nbsp;    
-        <ButtonDropdown
-          onItemClick={handleConfidenceItemClick}
-          items={ConfidenceValue}
-          expandableGroups
-        >
-          {confidenceThreshold === null? "Select confidence threshold": ConfidenceValue.find(c => c.id == confidenceThreshold).text}
-        </ButtonDropdown>    
-        </Container>
+        </ButtonDropdown>
+        <div>
+        Select confidence threshold: <br/>
+        <Slider style={{width:200}}
+          defaultValue={50} 
+          value={confidenceThreshold}
+          min={50} max={100} 
+          size="medium" 
+          step="1" 
+          marks={[
+            {
+              value: 50,
+              label: "50%",
+            },
+            {
+              value: 75,
+              label: "75%",
+            },
+            {
+              value: 100,
+              label: "100%",
+            },
+          ]}
+          aria-label="Default" 
+          valueLabelDisplay="auto"
+          valueLabelFormat={value => <div>{value + '%'}</div>}
+          onChange={handleConfidenceItemClick}/>
+        </div> 
        </ColumnLayout>
+       </Container>
        </div>
     )
     
