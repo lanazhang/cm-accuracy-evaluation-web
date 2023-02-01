@@ -34,7 +34,7 @@ function TaskCreate ({user, onSubmit, onDismiss}) {
     }
 
     if (taskName.length > 0) {
-      FetchData("/task/create-task", "put", {
+      FetchData("/task/create-task", "post", {
         "task_name": taskName,
         "task_description": taskDescription,
         "created_by": userName

@@ -5,16 +5,25 @@
   "private": true,
   "dependencies": {
     "@aws-amplify/ui-react": "^4.3.2",
+    "@aws-cdk/aws-certificatemanager": "^1.190.0",
+    "@aws-cdk/aws-cloudfront": "^1.190.0",
+    "@aws-cdk/aws-route53": "^1.190.0",
+    "@aws-cdk/aws-route53-targets": "^1.190.0",
+    "@aws-cdk/aws-s3": "^1.190.0",
+    "@aws-cdk/aws-s3-deployment": "^1.190.0",
+    "@aws-cdk/core": "^1.190.0",
     "@cloudscape-design/components": "^3.0.172",
     "@cloudscape-design/global-styles": "^1.0.7",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "aws-amplify": "^5.0.9",
+    "aws-cdk": "^2.62.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.7.0",
     "react-scripts": "^2.1.3",
+    "tsc": "^2.0.4",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -22,7 +31,9 @@
     "build": "react-scripts build",
     "deploy": "react-scripts build;aws s3 sync build/ s3://wwso-cm-demo/accuracy-evaluation-demo-web/",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "cdk_build": "tsc --target ES2018 --moduleResolution node --module commonjs cdk/index.ts",
+    "cdk_deploy": "npm run cdk_build && cdk deploy"
   },
   "eslintConfig": {
     "extends": [
@@ -41,5 +52,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "source-map-support": "^0.5.21",
+    "typescript": "^4.9.4"
   }
 }

@@ -14,6 +14,8 @@ function TaskReport ({selectedTask, onBack}) {
     const [confidenceThreshold, setConfidenceThreshold] = useState(null);
     const [subCategories, setSubCategories] = useState(null);
 
+    const [reportUrl, setReportUrl] = useState(null);
+
     useEffect(() => {
       // Auto refresh 
       if (loadingStatus === null && task !== null) {
@@ -96,16 +98,34 @@ function TaskReport ({selectedTask, onBack}) {
       setTypeFilter(null);
       setLoadingStatus(null);
     }
+
+    const handleExport = e => {
+      FetchData("/report/export", "post", {
+        id: task.id,
+        top_category: topCategoryFilter,
+        sub_category: subCategoryFilter,
+        type: typeFilter,
+        confidence_threshold: confidenceThreshold,
+      }).then((data) => {
+            setReportUrl(data.body)
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
+    }
   
     const Filter = () => (
       <div>
       <ColumnLayout columns="1" variant="text-grid">
         <Box float='right'>
+
+
               {loadingStatus === "LOADING"?<Spinner />
               :<div /> } 
          &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null} >Reset</Button>    
          &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
-        </Box>
+         &nbsp;<Button variant="normal" download={true} onClick={handleExport}>Export flagged images to CSV</Button>  
+          {reportUrl !== null? <a href={reportUrl}>Download CSV</a>: <div/> }          </Box>
       </ColumnLayout>
       <ColumnLayout columns="1" variant="text-grid">
       <Container float='left'>
