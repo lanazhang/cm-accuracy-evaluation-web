@@ -27,7 +27,7 @@ function GetStarted ({onStart}) {
                         <Button onClick={onStart}>Get Started</Button>
                     }
                 >
-                    AWS Content Moderation Accuracy Evaluation
+                    AWS Content Moderation Accuracy Evaluation (Beta)
                 </Header>
                 {messages.length >0?
                 <Alert>This is a generic alert.</Alert>:<div/>}

@@ -180,6 +180,7 @@ function TaskImages ({selectedTask, onBack}) {
            &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
           </Box>
         </ColumnLayout>
+        <br/>
         <Container float='left'>
         <ColumnLayout columns="4" variant="text-grid">
           <ButtonDropdown

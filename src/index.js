@@ -10,6 +10,7 @@ import config from './aws-exports';
 Amplify.configure({
   // OPTIONAL - if your API requires authentication 
   Auth: {
+    
       identityPoolId: config.aws_cognito_identity_pool_id, // REQUIRED - Amazon Cognito Identity Pool ID
       region: config.aws_project_region, // REQUIRED - Amazon Cognito Region
       userPoolId: config.aws_user_pools_id, // OPTIONAL - Amazon Cognito User Pool ID
@@ -25,7 +26,8 @@ Amplify.configure({
       endpoints: [
           {
               name: "CmAccuracyEvalSrv",
-              endpoint: "https://vgapm1vmwh.execute-api.us-east-1.amazonaws.com/staging/v1"
+              //endpoint: "https://vgapm1vmwh.execute-api.us-east-1.amazonaws.com/staging/v1"
+              endpoint: "https://fgl62871zh.execute-api.us-west-2.amazonaws.com/prod/v1"
               //endpoint: "[[[APIGATEWAY_BASE_URL]]]"
           }
       ]

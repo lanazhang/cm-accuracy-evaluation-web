@@ -23,6 +23,15 @@ function TaskReport ({selectedTask, onBack}) {
         reloadReport();
       }
     })
+
+    function getConfidenceYMax() {
+      var tp = 0, fp = 0;
+      if (report.by_confidence_type["true-positive"] !== undefined && report.by_confidence_type["true-positive"].length > 0)
+        tp = Math.max(...report.by_confidence_type["true-positive"].map(x => x.value));
+      if (report.by_confidence_type["false-positive"] !== undefined && report.by_confidence_type["false-positive"].length > 0)
+        fp = Math.max(...report.by_confidence_type["false-positive"].map(x => x.value));
+      return tp + fp;
+    }
   
     function reloadReport() {
       setLoadingStatus("LOADING");
@@ -123,8 +132,8 @@ function TaskReport ({selectedTask, onBack}) {
               :<div /> } 
          &nbsp;<Button variant="normal" onClick={handleReset} disabled={topCategoryFilter === null && subCategoryFilter === null && typeFilter === null && confidenceThreshold === null} >Reset</Button>    
          &nbsp;<Button variant="primary" onClick={onBack}>Back to list</Button>
-         &nbsp;<Button variant="normal" download={true} onClick={handleExport}>Export flagged images to CSV</Button>  
-          {reportUrl !== null? <a href={reportUrl}>Download CSV</a>: <div/> }          </Box>
+         &nbsp;<Button variant="normal" download={true} onClick={handleExport}>Export moderation result to CSV</Button>  
+          {reportUrl !== null? <a href={reportUrl} onClick={e=> setReportUrl(null)}>Download CSV</a>: <div/> }          </Box>
       </ColumnLayout>
       <br/>
       <Container>
@@ -550,7 +559,7 @@ function TaskReport ({selectedTask, onBack}) {
                 }
               ]}
               xDomain={["50", "55", "60", "65", "70", "75", "80", "85", "90", "95"]} 
-              yDomain={[0, Math.max(...report.by_confidence_type["true-positive"].map(x => x.value).concat(report.by_confidence_type["false-positive"].map(x => x.value)))]}
+              yDomain={[0, getConfidenceYMax()]}
               i18nStrings={{
                 filterLabel: "Filter displayed data",
                 filterPlaceholder: "Filter data",
