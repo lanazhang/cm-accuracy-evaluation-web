@@ -37,10 +37,12 @@ const App = ({ signOut, user }) => {
     setCurrentPage(e.detail.id);
     setActiveNavHref(e.detail.href);
     if (e.detail.id === "getstarted") {
-      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home', "href": '#'}, {"id":"dashboard", "text": 'Dashboard', "href": '#/getstarted', }]);
+      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Dashboard', }]);
+      setCurrentPage("getstarted");
     }
     else {
-      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home', "href": '#'}, {"id":"dashboard", "text": 'Evaluation tasks', "href": '#/tasks', }]);
+      setCurrentBreadcrumb([{ "type": 'label', "text": 'Home'}, {"id":"dashboard", "text": 'Evaluation tasks', }]);
+      setCurrentPage("task");
     }
     setCurrentPage(e.detail.id);
   }
@@ -98,7 +100,7 @@ const App = ({ signOut, user }) => {
           { type: 'link', id:"tasks", text: 'Evaluation Tasks', "href": '#/tasks', },
           { type: 'divider' },
           {
-            type: 'link', text: 'Documentation', external: true, href: '#/documentation',
+            type: 'link', text: 'Documentation', external: true, href: 'https://github.com/lanazhang/aws-ai-cm-rek-img-accuracy-eval-cdk',
           },
         ]
       } 
